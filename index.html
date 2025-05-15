@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quick Word Practice</title>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Quick Word Practice</title>
+<style>
     body {
       font-family: Arial, sans-serif;
       padding: 1rem;
@@ -56,17 +57,15 @@
     }
   </style>
 </head>
-<body>
-  <h1>Quick Word Practice</h1>
-  <input type="text" id="wordInput" placeholder="Enter a word..." />
-  <div>
-    <button onclick="confirmExport()">📥 내보내기</button>
-    <input type="file" id="importFile" style="display:none" onchange="importData(event)" />
-    <button onclick="confirmImport()">📤 불러오기</button>
-  </div>
-  <div id="wordCards"></div>
-
-  <script>
+<body><div><div>
+<button onclick="signInWithGoogle()">🔑 Google 로그인</button>
+<button onclick="backupToFirestore()">📤 Firestore에 백업</button>
+<button onclick="restoreFromFirestore()">📥 Firestore에서 복원</button>
+</div></div><div id="usernameDisplay"></div>
+<h1>Quick Word Practice</h1>
+<input id="wordInput" placeholder="Enter a word..." type="text"/>
+<div id="wordCards"></div>
+<script>
     const input = document.getElementById("wordInput");
     const cards = document.getElementById("wordCards");
 
@@ -213,8 +212,7 @@
       reader.readAsText(file);
     }
   </script>
-
-  <script type="module">
+<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
@@ -249,9 +247,8 @@
       }
     };
   </script>
-
-  <!-- 백업/복원 버튼 추가 -->
-  <script type="module">
+<!-- 백업/복원 버튼 추가 -->
+<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
@@ -276,7 +273,7 @@
       try {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
-        alert("✅ 로그인 성공: " + user.displayName);
+        document.getElementById("usernameDisplay").innerText = `👋 안녕하세요, ${user.displayName}님!`;
         window.loggedInUserId = user.uid;
       } catch (error) {
         alert("❌ 로그인 실패: " + error.message);
@@ -305,12 +302,9 @@
       }
     };
   </script>
-
-  <div>
-    <button onclick="signInWithGoogle()">🔑 Google 로그인</button>
-    <button onclick="backupToFirestore()">📤 Firestore에 백업</button>
-    <button onclick="restoreFromFirestore()">📥 Firestore에서 복원</button>
-  </div>
-
-</body>
+<div><div>
+<button onclick="confirmExport()">📥 내보내기</button>
+<input id="importFile" onchange="importData(event)" style="display:none" type="file"/>
+<button onclick="confirmImport()">📤 불러오기</button>
+</div></div></body>
 </html>
