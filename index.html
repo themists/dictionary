@@ -251,7 +251,63 @@
   </script>
 
   <!-- 백업/복원 버튼 추가 -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCS2cdIvwE8RuZXdAgCL-QE6tAYobYeixw",
+      authDomain: "word-practice-app.firebaseapp.com",
+      projectId: "word-practice-app",
+      storageBucket: "word-practice-app.firebasestorage.app",
+      messagingSenderId: "489669791875",
+      appId: "1:489669791875:web:45291b0005ac5913068bb6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth();
+    const provider = new GoogleAuthProvider();
+
+    window.loggedInUserId = null;
+
+    window.signInWithGoogle = async function () {
+      try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        alert("✅ 로그인 성공: " + user.displayName);
+        window.loggedInUserId = user.uid;
+      } catch (error) {
+        alert("❌ 로그인 실패: " + error.message);
+      }
+    };
+
+    window.backupToFirestore = async function () {
+      const userId = window.loggedInUserId;
+      if (!userId) return alert("❗ 먼저 로그인하세요.");
+
+      const wordData = JSON.parse(localStorage.getItem("wordData")) || {};
+      await setDoc(doc(db, "users", userId), { wordData });
+      alert("✅ Firestore에 백업 완료!");
+    };
+
+    window.restoreFromFirestore = async function () {
+      const userId = window.loggedInUserId;
+      if (!userId) return alert("❗ 먼저 로그인하세요.");
+
+      const docSnap = await getDoc(doc(db, "users", userId));
+      if (docSnap.exists()) {
+        localStorage.setItem("wordData", JSON.stringify(docSnap.data().wordData));
+        alert("✅ Firestore에서 복원 완료! 새로고침하세요.");
+      } else {
+        alert("❗ 저장된 데이터가 없습니다.");
+      }
+    };
+  </script>
+
   <div>
+    <button onclick="signInWithGoogle()">🔑 Google 로그인</button>
     <button onclick="backupToFirestore()">📤 Firestore에 백업</button>
     <button onclick="restoreFromFirestore()">📥 Firestore에서 복원</button>
   </div>
