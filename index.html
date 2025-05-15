@@ -61,7 +61,7 @@
 <button onclick="signInWithGoogle()">🔑 Google 로그인</button>
 <button onclick="backupToFirestore()">📤 Firestore에 백업</button>
 <button onclick="restoreFromFirestore()">📥 Firestore에서 복원</button>
-</div></div><div id="usernameDisplay"></div>
+</div></div><div id="usernameDisplay"></div><button id="logoutButton" onclick="signOutFromGoogle()">🚪 로그아웃</button>
 <h1>Quick Word Practice</h1>
 <input id="wordInput" placeholder="Enter a word..." type="text"/>
 <div id="wordCards"></div>
@@ -308,6 +308,31 @@
       if (user) {
         window.loggedInUserId = user.uid;
         document.getElementById("usernameDisplay").innerText = `👋 안녕하세요, ${user.displayName}님!`;
+      }
+    });
+
+    import { signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+
+    window.signOutFromGoogle = async function () {
+  if (!confirm("정말 로그아웃하시겠습니까?")) return;
+      try {
+        await signOut(auth);
+        window.loggedInUserId = null;
+        document.getElementById("usernameDisplay").innerText = "";
+        document.getElementById("logoutButton").style.display = "none";
+        alert("👋 로그아웃 되었습니다.");
+      } catch (error) {
+        alert("❌ 로그아웃 실패: " + error.message);
+      }
+    };
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        window.loggedInUserId = user.uid;
+        document.getElementById("usernameDisplay").innerText = `👋 안녕하세요, ${user.displayName}님!`;
+        document.getElementById("logoutButton").style.display = "inline-block";
+      } else {
+        document.getElementById("logoutButton").style.display = "none";
       }
     });
 </script>
