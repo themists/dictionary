@@ -4,6 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Quick Word Practice</title>
+
+  <!-- ✅ iOS 홈 아이콘 및 PWA 설정 -->
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ffffff">
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -229,7 +235,6 @@
     reader.readAsText(file);
   }
 </script>
-
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
   import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
@@ -309,10 +314,12 @@
   });
 </script>
 
+<!-- 불러오기용 숨겨진 파일 입력 -->
 <div>
   <button onclick="confirmExport()">📥 내보내기</button>
   <input id="importFile" onchange="importData(event)" style="display:none" type="file"/>
   <button onclick="confirmImport()">📤 불러오기</button>
 </div>
+
 </body>
 </html>
