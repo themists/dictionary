@@ -72,9 +72,10 @@
 
     window.onload = function () {
   const savedData = JSON.parse(localStorage.getItem("wordData")) || {};
-  const sortedWords = Object.entries(savedData).sort((a, b) => a[1] - b[1]).map(entry => entry[0]);
+  const sortedWords = Object.entries(savedData)
+    .sort((a, b) => a[1] - b[1])
+    .map(entry => entry[0]);
   sortedWords.forEach(word => addCard(word, savedData[word]));
-  autoDownloadBackup(savedData);
 };
 
     input.addEventListener("keypress", function (e) {
@@ -121,7 +122,26 @@
       return text.split('').map(char => layoutMap[char] || char).join('');
     }
 
-    
+    function addCard(word, count) {
+      const div = document.createElement("div");
+      div.className = "card";
+      const countId = `count-${word}-${Date.now()}`;
+      div.innerHTML = `
+        <div class="card-content">
+          <strong>${word}</strong><br/>
+          <a href="https://www.google.com/search?q=${word}+meaning" target="_blank">Dictionary</a>
+          <a href="https://www.google.com/search?q=pronounce+${word}" target="_blank">Pronunciation</a>
+          <div class="count" id="${countId}">복습 횟수: ${count}</div>
+        </div>
+        <div>
+          <label>
+            <input type="checkbox" onclick="incrementCount('${word}', '${countId}')" /> 복습 완료
+          </label><br/>
+          <button class="delete-btn" onclick="confirmDelete('${word}', this)">삭제</button>
+        </div>
+      `;
+      cards.prepend(div);
+    }
 
     function incrementCount(word, id) {
       const countDiv = document.getElementById(id);
@@ -192,45 +212,6 @@
       };
       reader.readAsText(file);
     }
-  
-function addCard(word, count) {
-  const div = document.createElement("div");
-  div.className = "card";
-  const countId = `count-${word}-${Date.now()}`;
-  div.innerHTML = `
-    <div class="card-content">
-      <strong>${word}</strong><br/>
-      <a href="https://www.google.com/search?q=${word}+meaning" target="_blank">Dictionary</a>
-      <a href="https://www.google.com/search?q=pronounce+${word}" target="_blank">Pronunciation</a>
-      <div class="count" id="${countId}">
-        복습 횟수: ${count}
-        <label style="margin-left: 1rem;">
-          <input type="checkbox" onclick="incrementCount('${word}', '${countId}')" /> 복습 완료
-        </label>
-        <button class="delete-btn" onclick="confirmDelete('${word}', this)" style="margin-left: 0.5rem;">삭제</button>
-      </div>
-    </div>
-  `;
-  cards.prepend(div);
-}
-
-
-function autoDownloadBackup(data) {
-  if (!data || Object.keys(data).length === 0) return;
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const date = new Date().toISOString().slice(0, 10);
-  const filename = `wordData_backup_${date}.json`;
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.style.display = "none";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-</script>
+  </script>
 </body>
 </html>
