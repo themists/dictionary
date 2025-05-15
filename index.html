@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Quick Word Practice</title>
+<title>Quick Word Practice v1.0</title>
 <style>
     body {
       font-family: Arial, sans-serif;
@@ -62,7 +62,7 @@
 <button onclick="backupToFirestore()">📤 Firestore에 백업</button>
 <button onclick="restoreFromFirestore()">📥 Firestore에서 복원</button>
 </div></div><div id="usernameDisplay"></div><button id="logoutButton" onclick="signOutFromGoogle()">🚪 로그아웃</button>
-<h1>Quick Word Practice</h1>
+<h1>Quick Word Practice <span id="wordCount" style="font-size: 1rem; color: #666;">(총 0단어)</span></h1>
 <input id="wordInput" placeholder="Enter a word..." type="text"/>
 <div id="wordCards"></div>
 <script>
