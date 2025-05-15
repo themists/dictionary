@@ -301,7 +301,16 @@
         alert("❗ 저장된 데이터가 없습니다.");
       }
     };
-  </script>
+  
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        window.loggedInUserId = user.uid;
+        document.getElementById("usernameDisplay").innerText = `👋 안녕하세요, ${user.displayName}님!`;
+      }
+    });
+</script>
 <div><div>
 <button onclick="confirmExport()">📥 내보내기</button>
 <input id="importFile" onchange="importData(event)" style="display:none" type="file"/>
