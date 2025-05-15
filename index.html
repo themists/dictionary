@@ -75,11 +75,6 @@
   const sortedWords = Object.entries(savedData).sort((a, b) => a[1] - b[1]).map(entry => entry[0]);
   sortedWords.forEach(word => addCard(word, savedData[word]));
   autoDownloadBackup(savedData);
-  const savedData = JSON.parse(localStorage.getItem("wordData")) || {};
-  const sortedWords = Object.entries(savedData)
-    .sort((a, b) => a[1] - b[1])
-    .map(entry => entry[0]);
-  sortedWords.forEach(word => addCard(word, savedData[word]));
 };
 
     input.addEventListener("keypress", function (e) {
