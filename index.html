@@ -71,6 +71,7 @@
     const cards = document.getElementById("wordCards");
 
     window.onload = function () {
+
   const savedData = JSON.parse(localStorage.getItem("wordData")) || {};
   const sortedWords = Object.entries(savedData)
     .sort((a, b) => a[1] - b[1])
@@ -136,7 +137,7 @@
         <div>
           <label>
             <input type="checkbox" onclick="incrementCount('${word}', '${countId}')" /> 복습 완료
-          </label><br/>
+          </label><br/><br/>
           <button class="delete-btn" onclick="confirmDelete('${word}', this)">삭제</button>
         </div>
       `;
@@ -215,3 +216,23 @@
   </script>
 </body>
 </html>
+
+
+  autoDownloadBackup(savedData);
+};
+
+function autoDownloadBackup(data) {
+  if (!data || Object.keys(data).length === 0) return;
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const date = new Date().toISOString().slice(0, 10);
+  const filename = `wordData_backup_${date}.json`;
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
