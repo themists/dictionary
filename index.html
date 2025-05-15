@@ -1,11 +1,16 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Quick Word Practice v1.0</title>
-<style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quick Word Practice</title>
+
+  <!-- ✅ iOS 홈 아이콘 및 PWA 설정 -->
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ffffff">
+
+  <style>
     body {
       font-family: Arial, sans-serif;
       padding: 1rem;
@@ -57,166 +62,184 @@
     }
   </style>
 </head>
-<body><div><div>
-<button onclick="signInWithGoogle()">🔑 Google 로그인</button>
-<button onclick="backupToFirestore()">📤 Firestore에 백업</button>
-<button onclick="restoreFromFirestore()">📥 Firestore에서 복원</button>
-</div></div><div id="usernameDisplay"></div><button id="logoutButton" onclick="signOutFromGoogle()">🚪 로그아웃</button>
-<h1>Quick Word Practice <span id="wordCount" style="font-size: 1rem; color: #666;">(총 0단어)</span></h1>
-<input id="wordInput" placeholder="Enter a word..." type="text"/>
-<div id="wordCards"></div>
+<body>
+  <div>
+    <button onclick="signInWithGoogle()">🔑 Google 로그인</button>
+    <button onclick="backupToFirestore()">📤 Firestore에 백업</button>
+    <button onclick="restoreFromFirestore()">📥 Firestore에서 복원</button>
+  </div>
+  <div id="usernameDisplay"></div>
+  <button id="logoutButton" onclick="signOutFromGoogle()">🚪 로그아웃</button>
+
+  <h1>
+    Quick Word Practice
+    <span id="wordCount" style="font-size: 1rem; color: #666;">(총 0단어)</span>
+  </h1>
+
+  <input id="wordInput" placeholder="Enter a word..." type="text" />
+  <div id="wordCards"></div>
 <script>
-    const input = document.getElementById("wordInput");
-    const cards = document.getElementById("wordCards");
+  const input = document.getElementById("wordInput");
+  const cards = document.getElementById("wordCards");
 
-    window.onload = function () {
-  const savedData = JSON.parse(localStorage.getItem("wordData")) || {};
-  const sortedWords = Object.entries(savedData)
-    .sort((a, b) => a[1] - b[1])
-    .map(entry => entry[0]);
-  sortedWords.forEach(word => addCard(word, savedData[word]));
-};
+  window.onload = function () {
+    const savedData = JSON.parse(localStorage.getItem("wordData")) || {};
+    const sortedWords = Object.entries(savedData)
+      .sort((a, b) => a[1] - b[1])
+      .map(entry => entry[0]);
+    sortedWords.forEach(word => addCard(word, savedData[word]));
+    updateWordCount();
+  };
 
-    input.addEventListener("keypress", function (e) {
-      if (e.key === "Enter") {
-        let word = input.value.trim();
-        if (!word) return;
-        word = toEnglishLayout(decomposeHangul(word));
-        const savedData = JSON.parse(localStorage.getItem("wordData")) || {};
-        if (word in savedData) {
-          const existingCard = [...document.querySelectorAll(".card")].find(card =>
-            card.querySelector("strong")?.textContent === word
-          );
-          if (existingCard) existingCard.remove();
-          addCard(word, savedData[word]);
-        } else {
-          addCard(word, 0);
-          savedData[word] = 0;
-          localStorage.setItem("wordData", JSON.stringify(savedData));
-        }
-        input.value = "";
-      }
-    });
-
-    function decomposeHangul(text) {
-      const initial = ["r","R","s","e","E","f","a","q","Q","t","T","d","w","W","c","z","x","v","g"];
-      const medial = ["k","o","i","O","j","p","u","P","h","hk","ho","hl","y","n","nj","np","nl","b","m","ml","l"];
-      const final = ["", "r", "R", "rt", "s", "sw", "sg", "e", "f", "fr", "fa", "fq", "ft", "fx", "fv", "fg", "a", "q", "qt", "t", "T", "d", "w", "c", "z", "x", "v", "g"];
-      return Array.from(text).map(char => {
-        const code = char.charCodeAt(0) - 44032;
-        if (code < 0 || code > 11171) return char;
-        const i = Math.floor(code / 588);
-        const m = Math.floor((code % 588) / 28);
-        const f = code % 28;
-        return initial[i] + medial[m] + (final[f] || "");
-      }).join("");
-    }
-
-    function toEnglishLayout(text) {
-      const layoutMap = {
-        'ㅂ':'q','ㅈ':'w','ㄷ':'e','ㄱ':'r','ㅅ':'t','ㅛ':'y','ㅕ':'u','ㅑ':'i','ㅐ':'o','ㅔ':'p',
-        'ㅁ':'a','ㄴ':'s','ㅇ':'d','ㄹ':'f','ㅎ':'g','ㅗ':'h','ㅓ':'j','ㅏ':'k','ㅣ':'l',
-        'ㅋ':'z','ㅌ':'x','ㅊ':'c','ㅍ':'v','ㅠ':'b','ㅜ':'n','ㅡ':'m'
-      };
-      return text.split('').map(char => layoutMap[char] || char).join('');
-    }
-
-    function addCard(word, count) {
-      const div = document.createElement("div");
-      div.className = "card";
-      const countId = `count-${word}-${Date.now()}`;
-      div.innerHTML = `
-        <div class="card-content">
-          <strong>${word}</strong><br/>
-          <a href="https://www.google.com/search?q=${word}+meaning" target="_blank">Dictionary</a>
-          <a href="https://www.google.com/search?q=pronounce+${word}" target="_blank">Pronunciation</a>
-          <div class="count" id="${countId}">복습 횟수: ${count}</div>
-        </div>
-        <div>
-          <label>
-            <input type="checkbox" onclick="incrementCount('${word}', '${countId}')" /> 복습 완료
-          </label><br/>
-          <button class="delete-btn" onclick="confirmDelete('${word}', this)">삭제</button>
-        </div>
-      `;
-      cards.prepend(div);
-    }
-
-    function incrementCount(word, id) {
-      const countDiv = document.getElementById(id);
-      const text = countDiv.textContent;
-      const match = text.match(/\d+/);
-      if (match) {
-        const newCount = parseInt(match[0]) + 1;
-        countDiv.textContent = `복습 횟수: ${newCount}`;
-        const savedData = JSON.parse(localStorage.getItem("wordData")) || {};
-        savedData[word] = newCount;
+  input.addEventListener("keypress", function (e) {
+    if (e.key === "Enter") {
+      let word = input.value.trim();
+      if (!word) return;
+      word = toEnglishLayout(decomposeHangul(word));
+      const savedData = JSON.parse(localStorage.getItem("wordData")) || {};
+      if (word in savedData) {
+        const existingCard = [...document.querySelectorAll(".card")].find(card =>
+          card.querySelector("strong")?.textContent === word
+        );
+        if (existingCard) existingCard.remove();
+        addCard(word, savedData[word]);
+      } else {
+        addCard(word, 0);
+        savedData[word] = 0;
         localStorage.setItem("wordData", JSON.stringify(savedData));
       }
+      input.value = "";
     }
+  });
 
-    function confirmDelete(word, button) {
-      if (confirm(`단어 "${word}"를 삭제하시겠습니까?`)) {
-        deleteWord(word, button);
-      }
-    }
+  function updateWordCount() {
+    const savedData = JSON.parse(localStorage.getItem("wordData")) || {};
+    const count = Object.keys(savedData).length;
+    const display = document.getElementById("wordCount");
+    if (display) display.textContent = `(총 ${count}단어)`;
+  }
 
-    function deleteWord(word, button) {
+  function decomposeHangul(text) {
+    const initial = ["r","R","s","e","E","f","a","q","Q","t","T","d","w","W","c","z","x","v","g"];
+    const medial = ["k","o","i","O","j","p","u","P","h","hk","ho","hl","y","n","nj","np","nl","b","m","ml","l"];
+    const final = ["", "r", "R", "rt", "s", "sw", "sg", "e", "f", "fr", "fa", "fq", "ft", "fx", "fv", "fg", "a", "q", "qt", "t", "T", "d", "w", "c", "z", "x", "v", "g"];
+    return Array.from(text).map(char => {
+      const code = char.charCodeAt(0) - 44032;
+      if (code < 0 || code > 11171) return char;
+      const i = Math.floor(code / 588);
+      const m = Math.floor((code % 588) / 28);
+      const f = code % 28;
+      return initial[i] + medial[m] + (final[f] || "");
+    }).join("");
+  }
+
+  function toEnglishLayout(text) {
+    const layoutMap = {
+      'ㅂ':'q','ㅈ':'w','ㄷ':'e','ㄱ':'r','ㅅ':'t','ㅛ':'y','ㅕ':'u','ㅑ':'i','ㅐ':'o','ㅔ':'p',
+      'ㅁ':'a','ㄴ':'s','ㅇ':'d','ㄹ':'f','ㅎ':'g','ㅗ':'h','ㅓ':'j','ㅏ':'k','ㅣ':'l',
+      'ㅋ':'z','ㅌ':'x','ㅊ':'c','ㅍ':'v','ㅠ':'b','ㅜ':'n','ㅡ':'m'
+    };
+    return text.split('').map(char => layoutMap[char] || char).join('');
+  }
+
+  function addCard(word, count) {
+    const div = document.createElement("div");
+    div.className = "card";
+    const countId = `count-${word}-${Date.now()}`;
+    div.innerHTML = `
+      <div class="card-content">
+        <strong>${word}</strong><br/>
+        <a href="https://www.google.com/search?q=${word}+meaning" target="_blank">Dictionary</a>
+        <a href="https://www.google.com/search?q=pronounce+${word}" target="_blank">Pronunciation</a>
+        <div class="count" id="${countId}">복습 횟수: ${count}</div>
+      </div>
+      <div>
+        <label>
+          <input type="checkbox" onclick="incrementCount('${word}', '${countId}')" /> 복습 완료
+        </label><br/>
+        <button class="delete-btn" onclick="confirmDelete('${word}', this)">삭제</button>
+      </div>
+    `;
+    cards.prepend(div);
+    updateWordCount();
+  }
+
+  function incrementCount(word, id) {
+    const countDiv = document.getElementById(id);
+    const text = countDiv.textContent;
+    const match = text.match(/\d+/);
+    if (match) {
+      const newCount = parseInt(match[0]) + 1;
+      countDiv.textContent = `복습 횟수: ${newCount}`;
       const savedData = JSON.parse(localStorage.getItem("wordData")) || {};
-      delete savedData[word];
+      savedData[word] = newCount;
       localStorage.setItem("wordData", JSON.stringify(savedData));
-      const card = button.closest(".card");
-      if (card) card.remove();
     }
+  }
 
-    function confirmExport() {
-      if (confirm("저장된 단어 데이터를 내보내시겠습니까?")) {
-        exportDataWithVersion();
+  function confirmDelete(word, button) {
+    if (confirm(`단어 "${word}"를 삭제하시겠습니까?`)) {
+      deleteWord(word, button);
+    }
+  }
+
+  function deleteWord(word, button) {
+    const savedData = JSON.parse(localStorage.getItem("wordData")) || {};
+    delete savedData[word];
+    localStorage.setItem("wordData", JSON.stringify(savedData));
+    const card = button.closest(".card");
+    if (card) card.remove();
+    updateWordCount();
+  }
+
+  function confirmExport() {
+    if (confirm("저장된 단어 데이터를 내보내시겠습니까?")) {
+      exportDataWithVersion();
+    }
+  }
+
+  function exportDataWithVersion() {
+    const data = localStorage.getItem("wordData");
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const date = new Date();
+    const timestamp = date.toISOString().replace(/[:.]/g, '-');
+    const filename = `wordData_backup_${timestamp}.json`;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function confirmImport() {
+    if (confirm("저장된 파일로 단어 데이터를 불러오시겠습니까? 현재 데이터는 덮어쓰기 됩니다. 이전 데이터는 자동으로 백업됩니다.")) {
+      exportDataWithVersion();
+      document.getElementById('importFile').click();
+    }
+  }
+
+  function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        localStorage.setItem("wordData", JSON.stringify(data));
+        location.reload();
+      } catch (error) {
+        alert("파일 형식이 올바르지 않습니다.");
       }
-    }
-
-    function exportDataWithVersion() {
-      const data = localStorage.getItem("wordData");
-      const blob = new Blob([data], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const date = new Date();
-      const timestamp = date.toISOString().replace(/[:.]/g, '-');
-      const filename = `wordData_backup_${timestamp}.json`;
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function confirmImport() {
-      if (confirm("저장된 파일로 단어 데이터를 불러오시겠습니까? 현재 데이터는 덮어쓰기 됩니다. 이전 데이터는 자동으로 백업됩니다.")) {
-        exportDataWithVersion();
-        document.getElementById('importFile').click();
-      }
-    }
-
-    function importData(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        try {
-          const data = JSON.parse(e.target.result);
-          localStorage.setItem("wordData", JSON.stringify(data));
-          location.reload();
-        } catch (error) {
-          alert("파일 형식이 올바르지 않습니다.");
-        }
-      };
-      reader.readAsText(file);
-    }
-  </script>
+    };
+    reader.readAsText(file);
+  }
+</script>
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+  import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
-    
   const firebaseConfig = {
     apiKey: "AIzaSyCS2cdIvwE8RuZXdAgCL-QE6tAYobYeixw",
     authDomain: "word-practice-app.firebaseapp.com",
@@ -226,130 +249,77 @@
     appId: "1:489669791875:web:45291b0005ac5913068bb6"
   };
 
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth();
+  const provider = new GoogleAuthProvider();
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const userId = "test-user"; // 나중에 Google 로그인 ID로 대체 가능
+  window.loggedInUserId = null;
 
-    window.backupToFirestore = async function () {
-      const wordData = JSON.parse(localStorage.getItem("wordData")) || {};
-      await setDoc(doc(db, "users", userId), { wordData });
-      alert("✅ Firestore에 백업 완료!");
-    };
+  window.signInWithGoogle = async function () {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      document.getElementById("usernameDisplay").innerText = `👋 안녕하세요, ${user.displayName}님!`;
+      window.loggedInUserId = user.uid;
+      document.getElementById("logoutButton").style.display = "inline-block";
+    } catch (error) {
+      alert("❌ 로그인 실패: " + error.message);
+    }
+  };
 
-    window.restoreFromFirestore = async function () {
-      const docSnap = await getDoc(doc(db, "users", userId));
-      if (docSnap.exists()) {
-        localStorage.setItem("wordData", JSON.stringify(docSnap.data().wordData));
-        alert("✅ Firestore에서 복원 완료! 새로고침하세요.");
-      } else {
-        alert("❗ 저장된 데이터가 없습니다.");
-      }
-    };
-  </script>
-<!-- 백업/복원 버튼 추가 -->
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+  window.signOutFromGoogle = async function () {
+    if (!confirm("정말 로그아웃하시겠습니까?")) return;
+    try {
+      await signOut(auth);
+      window.loggedInUserId = null;
+      document.getElementById("usernameDisplay").innerText = "";
+      document.getElementById("logoutButton").style.display = "none";
+      alert("👋 로그아웃 되었습니다.");
+    } catch (error) {
+      alert("❌ 로그아웃 실패: " + error.message);
+    }
+  };
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCS2cdIvwE8RuZXdAgCL-QE6tAYobYeixw",
-      authDomain: "word-practice-app.firebaseapp.com",
-      projectId: "word-practice-app",
-      storageBucket: "word-practice-app.firebasestorage.app",
-      messagingSenderId: "489669791875",
-      appId: "1:489669791875:web:45291b0005ac5913068bb6"
-    };
+  window.backupToFirestore = async function () {
+    const userId = window.loggedInUserId;
+    if (!userId) return alert("❗ 먼저 로그인하세요.");
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth();
-    const provider = new GoogleAuthProvider();
+    const wordData = JSON.parse(localStorage.getItem("wordData")) || {};
+    await setDoc(doc(db, "users", userId), { wordData });
+    alert("✅ Firestore에 백업 완료!");
+  };
 
-    window.loggedInUserId = null;
+  window.restoreFromFirestore = async function () {
+    const userId = window.loggedInUserId;
+    if (!userId) return alert("❗ 먼저 로그인하세요.");
 
-    window.signInWithGoogle = async function () {
-      try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        document.getElementById("usernameDisplay").innerText = `👋 안녕하세요, ${user.displayName}님!`;
-        window.loggedInUserId = user.uid;
-      } catch (error) {
-        alert("❌ 로그인 실패: " + error.message);
-      }
-    };
+    const docSnap = await getDoc(doc(db, "users", userId));
+    if (docSnap.exists()) {
+      localStorage.setItem("wordData", JSON.stringify(docSnap.data().wordData));
+      alert("✅ Firestore에서 복원 완료! 새로고침하세요.");
+    } else {
+      alert("❗ 저장된 데이터가 없습니다.");
+    }
+  };
 
-    window.backupToFirestore = async function () {
-      const userId = window.loggedInUserId;
-      if (!userId) return alert("❗ 먼저 로그인하세요.");
-
-      const wordData = JSON.parse(localStorage.getItem("wordData")) || {};
-      await setDoc(doc(db, "users", userId), { wordData });
-      alert("✅ Firestore에 백업 완료!");
-    };
-
-    window.restoreFromFirestore = async function () {
-      const userId = window.loggedInUserId;
-      if (!userId) return alert("❗ 먼저 로그인하세요.");
-
-      const docSnap = await getDoc(doc(db, "users", userId));
-      if (docSnap.exists()) {
-        localStorage.setItem("wordData", JSON.stringify(docSnap.data().wordData));
-        alert("✅ Firestore에서 복원 완료! 새로고침하세요.");
-      } else {
-        alert("❗ 저장된 데이터가 없습니다.");
-      }
-    };
-  
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        window.loggedInUserId = user.uid;
-        document.getElementById("usernameDisplay").innerText = `👋 안녕하세요, ${user.displayName}님!`;
-      }
-    });
-
-    import { signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
-
-    window.signOutFromGoogle = async function () {
-  if (!confirm("정말 로그아웃하시겠습니까?")) return;
-      try {
-        await signOut(auth);
-        window.loggedInUserId = null;
-        document.getElementById("usernameDisplay").innerText = "";
-        document.getElementById("logoutButton").style.display = "none";
-        alert("👋 로그아웃 되었습니다.");
-      } catch (error) {
-        alert("❌ 로그아웃 실패: " + error.message);
-      }
-    };
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        window.loggedInUserId = user.uid;
-        document.getElementById("usernameDisplay").innerText = `👋 안녕하세요, ${user.displayName}님!`;
-        document.getElementById("logoutButton").style.display = "inline-block";
-      } else {
-        document.getElementById("logoutButton").style.display = "none";
-      }
-    });
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      window.loggedInUserId = user.uid;
+      document.getElementById("usernameDisplay").innerText = `👋 안녕하세요, ${user.displayName}님!`;
+      document.getElementById("logoutButton").style.display = "inline-block";
+    } else {
+      document.getElementById("logoutButton").style.display = "none";
+    }
+  });
 </script>
-<div><div>
-<button onclick="confirmExport()">📥 내보내기</button>
-<input id="importFile" onchange="importData(event)" style="display:none" type="file"/>
-<button onclick="confirmImport()">📤 불러오기</button>
-</div></div>
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener("load", function () {
-      navigator.serviceWorker.register("/service-worker.js")
-        .then(reg => console.log("✅ Service Worker registered:", reg.scope))
-        .catch(err => console.error("❌ Service Worker error:", err));
-    });
-  }
-</script>
+
+<!-- 불러오기용 숨겨진 파일 입력 -->
+<div>
+  <button onclick="confirmExport()">📥 내보내기</button>
+  <input id="importFile" onchange="importData(event)" style="display:none" type="file"/>
+  <button onclick="confirmImport()">📤 불러오기</button>
+</div>
 
 </body>
 </html>
