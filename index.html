@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quick Word Practice</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 1rem;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 0.5rem;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+    .card {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-content {
+      flex-grow: 1;
+    }
+    .card a {
+      display: inline-block;
+      margin-right: 1rem;
+      color: #007bff;
+      text-decoration: none;
+    }
+    .card input[type="checkbox"] {
+      transform: scale(1.2);
+    }
+    .count {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: #555;
+    }
+    .delete-btn {
+      background-color: transparent;
+      border: none;
+      color: red;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Quick Word Practice</h1>
+  <input type="text" id="wordInput" placeholder="Enter a word..." />
+  <div>
+    <button onclick="confirmExport()">📥 내보내기</button>
+    <input type="file" id="importFile" style="display:none" onchange="importData(event)" />
+    <button onclick="confirmImport()">📤 불러오기</button>
+  </div>
+  <div id="wordCards"></div>
+
+  <script>
+    const input = document.getElementById("wordInput");
+    const cards = document.getElementById("wordCards");
+
+    window.onload = function () {
+  const savedData = JSON.parse(localStorage.getItem("wordData")) || {};
+  const sortedWords = Object.entries(savedData)
+    .sort((a, b) => a[1] - b[1])
+    .map(entry => entry[0]);
+  sortedWords.forEach(word => addCard(word, savedData[word]));
+};
+
+    input.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        let word = input.value.trim();
+        if (!word) return;
+        word = toEnglishLayout(decomposeHangul(word));
+        const savedData = JSON.parse(localStorage.getItem("wordData")) || {};
+        if (word in savedData) {
+          const existingCard = [...document.querySelectorAll(".card")].find(card =>
+            card.querySelector("strong")?.textContent === word
+          );
+          if (existingCard) existingCard.remove();
+          addCard(word, savedData[word]);
+        } else {
+          addCard(word, 0);
+          savedData[word] = 0;
+          localStorage.setItem("wordData", JSON.stringify(savedData));
+        }
+        input.value = "";
+      }
+    });
+
+    function decomposeHangul(text) {
+      const initial = ["r","R","s","e","E","f","a","q","Q","t","T","d","w","W","c","z","x","v","g"];
+      const medial = ["k","o","i","O","j","p","u","P","h","hk","ho","hl","y","n","nj","np","nl","b","m","ml","l"];
+      const final = ["", "r", "R", "rt", "s", "sw", "sg", "e", "f", "fr", "fa", "fq", "ft", "fx", "fv", "fg", "a", "q", "qt", "t", "T", "d", "w", "c", "z", "x", "v", "g"];
+      return Array.from(text).map(char => {
+        const code = char.charCodeAt(0) - 44032;
+        if (code < 0 || code > 11171) return char;
+        const i = Math.floor(code / 588);
+        const m = Math.floor((code % 588) / 28);
+        const f = code % 28;
+        return initial[i] + medial[m] + (final[f] || "");
+      }).join("");
+    }
+
+    function toEnglishLayout(text) {
+      const layoutMap = {
+        'ㅂ':'q','ㅈ':'w','ㄷ':'e','ㄱ':'r','ㅅ':'t','ㅛ':'y','ㅕ':'u','ㅑ':'i','ㅐ':'o','ㅔ':'p',
+        'ㅁ':'a','ㄴ':'s','ㅇ':'d','ㄹ':'f','ㅎ':'g','ㅗ':'h','ㅓ':'j','ㅏ':'k','ㅣ':'l',
+        'ㅋ':'z','ㅌ':'x','ㅊ':'c','ㅍ':'v','ㅠ':'b','ㅜ':'n','ㅡ':'m'
+      };
+      return text.split('').map(char => layoutMap[char] || char).join('');
+    }
+
+    function addCard(word, count) {
+      const div = document.createElement("div");
+      div.className = "card";
+      const countId = `count-${word}-${Date.now()}`;
+      div.innerHTML = `
+        <div class="card-content">
+          <strong>${word}</strong><br/>
+          <a href="https://www.google.com/search?q=${word}+meaning" target="_blank">Dictionary</a>
+          <a href="https://www.google.com/search?q=pronounce+${word}" target="_blank">Pronunciation</a>
+          <div class="count" id="${countId}">복습 횟수: ${count}</div>
+        </div>
+        <div>
+          <label>
+            <input type="checkbox" onclick="incrementCount('${word}', '${countId}')" /> 복습 완료
+          </label><br/>
+          <button class="delete-btn" onclick="confirmDelete('${word}', this)">삭제</button>
+        </div>
+      `;
+      cards.prepend(div);
+    }
+
+    function incrementCount(word, id) {
+      const countDiv = document.getElementById(id);
+      const text = countDiv.textContent;
+      const match = text.match(/\d+/);
+      if (match) {
+        const newCount = parseInt(match[0]) + 1;
+        countDiv.textContent = `복습 횟수: ${newCount}`;
+        const savedData = JSON.parse(localStorage.getItem("wordData")) || {};
+        savedData[word] = newCount;
+        localStorage.setItem("wordData", JSON.stringify(savedData));
+      }
+    }
+
+    function confirmDelete(word, button) {
+      if (confirm(`단어 "${word}"를 삭제하시겠습니까?`)) {
+        deleteWord(word, button);
+      }
+    }
+
+    function deleteWord(word, button) {
+      const savedData = JSON.parse(localStorage.getItem("wordData")) || {};
+      delete savedData[word];
+      localStorage.setItem("wordData", JSON.stringify(savedData));
+      const card = button.closest(".card");
+      if (card) card.remove();
+    }
+
+    function confirmExport() {
+      if (confirm("저장된 단어 데이터를 내보내시겠습니까?")) {
+        exportDataWithVersion();
+      }
+    }
+
+    function exportDataWithVersion() {
+      const data = localStorage.getItem("wordData");
+      const blob = new Blob([data], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const date = new Date();
+      const timestamp = date.toISOString().replace(/[:.]/g, '-');
+      const filename = `wordData_backup_${timestamp}.json`;
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function confirmImport() {
+      if (confirm("저장된 파일로 단어 데이터를 불러오시겠습니까? 현재 데이터는 덮어쓰기 됩니다. 이전 데이터는 자동으로 백업됩니다.")) {
+        exportDataWithVersion();
+        document.getElementById('importFile').click();
+      }
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          localStorage.setItem("wordData", JSON.stringify(data));
+          location.reload();
+        } catch (error) {
+          alert("파일 형식이 올바르지 않습니다.");
+        }
+      };
+      reader.readAsText(file);
+    }
+  </script>
+</body>
+</html>
