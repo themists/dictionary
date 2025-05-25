@@ -70,7 +70,9 @@ function App() {
       prev: "이전",
       next: "다음",
       page: (p, t) => `페이지 ${p} / ${t}`,
-      version: (v) => `버전: ${v}`
+      version: (v) => `버전: ${v}`,
+      darkModeOn: "다크모드",
+      darkModeOff: "다크모드 해제"
     },
     en: {
       title: "EchoWord",
@@ -94,7 +96,9 @@ function App() {
       prev: "← Prev",
       next: "Next →",
       page: (p, t) => `Page ${p} of ${t}`,
-      version: (v) => `Version: ${v}`
+      version: (v) => `Version: ${v}`,
+      darkModeOn: "Dark Mode",
+      darkModeOff: "Turn Off Dark Mode"
     }
   };
 
@@ -178,7 +182,7 @@ function App() {
         <h1>{t[lang].title} ({t[lang].totalWords(Object.keys(words).length)})</h1>
         <div style={{ display: "flex", gap: "0.5rem" }}>
           <button onClick={() => setDarkMode(d => !d)}>
-            {darkMode ? "🌙 다크모드 해제" : "🌞 다크모드"}
+            {darkMode ? "🌙 " + t[lang].darkModeOff : "🌞 " + t[lang].darkModeOn}
           </button>
           <button onClick={() => {
             const newLang = lang === "ko" ? "en" : "ko";
