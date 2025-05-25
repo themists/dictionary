@@ -72,7 +72,7 @@ function App() {
       page: (p, t) => `페이지 ${p} / ${t}`,
       version: (v) => `버전: ${v}`,
       darkModeOn: "다크모드",
-      darkModeOff: "다크모드 해제"
+      darkModeOff: "라이트모드드"
     },
     en: {
       title: "EchoWord",
@@ -98,7 +98,7 @@ function App() {
       page: (p, t) => `Page ${p} of ${t}`,
       version: (v) => `Version: ${v}`,
       darkModeOn: "Dark Mode",
-      darkModeOff: "Turn Off Dark Mode"
+      darkModeOff: "Light Mode"
     }
   };
 
