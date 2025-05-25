@@ -1,4 +1,4 @@
-// App.jsx - 다국어 대응 + '학습' 용어 통일 버전
+// App.jsx - 다국어 대응 + 단어 카드 폭 개선 + 언어 전환 버튼 위치 조정
 import { useEffect, useState } from "react";
 import { initializeApp } from "firebase/app";
 import './App.css';
@@ -157,16 +157,15 @@ function App() {
   const totalPages = Math.ceil(sortedEntries.length / pageSize);
 
   return (
-    <div style={{ padding: "1rem", fontFamily: "Arial" }}>
-      <div style={{ textAlign: "right", marginBottom: "0.5rem" }}>
+    <div style={{ padding: "1rem", fontFamily: "Arial", maxWidth: "700px", margin: "0 auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1>
+          {t[lang].title} ({t[lang].totalWords(Object.keys(words).length)})
+        </h1>
         <button onClick={() => setLang(lang === "ko" ? "en" : "ko")}>
           {lang === "ko" ? "🇺🇸 English" : "🇰🇷 한국어"}
         </button>
       </div>
-
-      <h1>
-        {t[lang].title} ({t[lang].totalWords(Object.keys(words).length)})
-      </h1>
 
       <div>
         <button onClick={() => signInWithPopup(auth, provider).then(r => setUser(r.user))}>{t[lang].login}</button>
