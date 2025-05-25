@@ -66,8 +66,8 @@ input[type="text"] {
 }
 
 button {
-  background-color: #e0e0e0; /* 밝은 회색 */
-  color: #222;               /* 글자색은 진한 회색 */
+  background-color: #e0e0e0;
+  color: #222;
   border: none;
   border-radius: 6px;
   padding: 0.4rem 0.8rem;
@@ -76,7 +76,7 @@ button {
 }
 
 button:hover {
-  background-color: #d5d5d5; /* 호버 시 약간 어두운 회색 */
+  background-color: #d5d5d5;
 }
 
 button:disabled {
@@ -85,24 +85,41 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* 페이지네이션 스타일 */
+/* 페이지네이션 스타일 (다국어 대응 강화) */
 .pagination-controls {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  margin-top: 1rem;
+  margin: 1rem 0;
   flex-wrap: nowrap;
   overflow-x: auto;
   white-space: nowrap;
+  font-size: 1rem;
 }
 
 .pagination-controls button {
-  font-size: 1rem;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.8rem;
+  min-width: 80px;
+  text-align: center;
+  border-radius: 6px;
+  background-color: #e0e0e0;
+  color: #222;
+  border: none;
+  cursor: pointer;
 }
 
-/* 반응형: 모바일 화면 최적화 */
+.pagination-controls button:disabled {
+  background-color: #ccc;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.pagination-controls span {
+  min-width: 120px;
+  text-align: center;
+}
+
 @media (max-width: 600px) {
   body {
     font-size: 14px;
@@ -123,15 +140,17 @@ button:disabled {
   }
 
   .pagination-controls {
-    flex-direction: row;
-    justify-content: center;
     gap: 0.5rem;
-    flex-wrap: nowrap;
   }
 
   .pagination-controls button {
-    width: auto;
-    font-size: 1rem;
-    padding: 0.4rem 0.8rem;
+    min-width: auto;
+    font-size: 0.9rem;
+    padding: 0.3rem 0.6rem;
+  }
+
+  .pagination-controls span {
+    font-size: 0.9rem;
+    min-width: auto;
   }
 }

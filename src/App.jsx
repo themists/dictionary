@@ -1,3 +1,4 @@
+// App.jsx - 다국어 대응 + '학습' 용어 통일 버전
 import { useEffect, useState } from "react";
 import { initializeApp } from "firebase/app";
 import './App.css';
@@ -36,7 +37,53 @@ function App() {
   const [user, setUser] = useState(null);
   const [sortMode, setSortMode] = useState("countAsc");
   const [page, setPage] = useState(1);
+  const [lang, setLang] = useState("ko");
   const pageSize = 30;
+
+  const t = {
+    ko: {
+      title: "EchoWord",
+      totalWords: (n) => `총 ${n}단어`,
+      inputPlaceholder: "단어를 입력하세요...",
+      login: "로그인",
+      logout: "로그아웃",
+      backup: "백업",
+      restore: "복원",
+      sortABC: "ABC 정렬",
+      sortCount: "학습횟수 정렬",
+      studies: (n) => `학습 횟수: ${n}`,
+      lastStudied: (days) => days === 0 ? "오늘" : `${days}일 전`,
+      dictionary: "사전",
+      pronunciation: "발음",
+      studyDone: "학습 완료",
+      delete: "삭제",
+      prev: "이전",
+      next: "다음",
+      page: (p, t) => `페이지 ${p} / ${t}`,
+      version: (v) => `버전: ${v}`
+    },
+    en: {
+      title: "EchoWord",
+      totalWords: (n) => `${n} words`,
+      inputPlaceholder: "Enter a word...",
+      login: "Sign In",
+      logout: "Sign Out",
+      backup: "Backup",
+      restore: "Restore",
+      sortABC: "Sort: A–Z",
+      sortCount: "Sort: Study Count",
+      studies: (n) => `Studied: ${n}x`,
+      lastStudied: (days) => days === 0 ? "Today" : `${days} days ago`,
+      dictionary: "Dictionary",
+      pronunciation: "Pronunciation",
+      studyDone: "Mark Studied",
+      delete: "Delete",
+      prev: "← Prev",
+      next: "Next →",
+      page: (p, t) => `Page ${p} of ${t}`,
+      version: (v) => `Version: ${v}`
+    }
+  };
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("wordData")) || {};
@@ -45,35 +92,23 @@ function App() {
   }, []);
 
   const getToday = () => new Date().toISOString().slice(0, 10);
-
   const getDaysSince = (dateString) => {
     const today = new Date();
     const past = new Date(dateString);
     const diffTime = today.getTime() - past.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
   };
 
   const addWord = (word) => {
     const lower = word.toLowerCase();
     const today = getToday();
     const existing = words[lower];
-
     const updated = { ...words };
-
     if (existing) {
-      updated[lower] = {
-        ...existing,
-        lastReviewedAt: today
-      };
+      updated[lower] = { ...existing, lastReviewedAt: today };
     } else {
-      updated[lower] = {
-        count: 0,
-        lastReviewedAt: today,
-        reviewedSources: []
-      };
+      updated[lower] = { count: 0, lastReviewedAt: today, reviewedSources: [] };
     }
-
     setWords(updated);
     localStorage.setItem("wordData", JSON.stringify(updated));
   };
@@ -82,19 +117,14 @@ function App() {
     const today = getToday();
     const data = words[word];
     if (!data) return;
-
     const isToday = data.lastReviewedAt === today;
     const reviewed = data.reviewedSources || [];
-
     const alreadyReviewedToday = isToday && reviewed.length > 0;
     const alreadyByThisSource = isToday && reviewed.includes(sourceType);
-
     if (alreadyByThisSource) return;
-
     const updatedSources = isToday
       ? [...new Set([...reviewed, sourceType])]
       : [sourceType];
-
     const updated = {
       ...words,
       [word]: {
@@ -103,7 +133,6 @@ function App() {
         reviewedSources: updatedSources
       }
     };
-
     setWords(updated);
     localStorage.setItem("wordData", JSON.stringify(updated));
   };
@@ -115,60 +144,12 @@ function App() {
     localStorage.setItem("wordData", JSON.stringify(updated));
   };
 
-  const signIn = async () => {
-    try {
-      const result = await signInWithPopup(auth, provider);
-      setUser(result.user);
-    } catch (err) {
-      alert("로그인 실패: " + err.message);
-    }
-  };
-
-  const signOutUser = async () => {
-    if (!confirm("정말 로그아웃하시겠습니까?")) return;
-    await signOut(auth);
-    setUser(null);
-  };
-
-  const backup = async () => {
-    if (!user) return alert("로그인하세요.");
-    await setDoc(doc(db, "users", user.uid), { wordData: words });
-    alert("✅ 백업 완료!");
-  };
-
-  const restore = async () => {
-    if (!user) return alert("로그인하세요.");
-    const docSnap = await getDoc(doc(db, "users", user.uid));
-    if (docSnap.exists()) {
-      setWords(docSnap.data().wordData);
-      localStorage.setItem("wordData", JSON.stringify(docSnap.data().wordData));
-      alert("✅ 복원 완료! 새로고침하세요.");
-    } else {
-      alert("❗ 저장된 데이터 없음");
-    }
-  };
-
-  const toggleSort = (type) => {
-    setSortMode((prev) => {
-      if (type === "abc") {
-        return prev === "abcAsc" ? "abcDesc" : "abcAsc";
-      } else {
-        return prev === "countAsc" ? "countDesc" : "countAsc";
-      }
-    });
-  };
-
-  const sortedEntries = Object.entries(words).sort(([aWord, aData], [bWord, bData]) => {
+  const sortedEntries = Object.entries(words).sort(([a, aData], [b, bData]) => {
     switch (sortMode) {
-      case "abcAsc":
-        return aWord.localeCompare(bWord);
-      case "abcDesc":
-        return bWord.localeCompare(aWord);
-      case "countDesc":
-        return bData.count - aData.count;
-      case "countAsc":
-      default:
-        return aData.count - bData.count;
+      case "abcAsc": return a.localeCompare(b);
+      case "abcDesc": return b.localeCompare(a);
+      case "countDesc": return bData.count - aData.count;
+      default: return aData.count - bData.count;
     }
   });
 
@@ -177,20 +158,35 @@ function App() {
 
   return (
     <div style={{ padding: "1rem", fontFamily: "Arial" }}>
+      <div style={{ textAlign: "right", marginBottom: "0.5rem" }}>
+        <button onClick={() => setLang(lang === "ko" ? "en" : "ko")}>
+          {lang === "ko" ? "🇺🇸 English" : "🇰🇷 한국어"}
+        </button>
+      </div>
+
       <h1>
-        EchoWord (총 {Object.keys(words).length}단어)
+        {t[lang].title} ({t[lang].totalWords(Object.keys(words).length)})
       </h1>
+
       <div>
-        <button onClick={signIn}>🔑 로그인</button>
-        <button onClick={backup}>📤 백업</button>
-        <button onClick={restore}>📥 복원</button>
-        <button onClick={signOutUser}>🚪 로그아웃</button>
-        {user && <div>👋 안녕하세요, {user.displayName}님!</div>}
+        <button onClick={() => signInWithPopup(auth, provider).then(r => setUser(r.user))}>{t[lang].login}</button>
+        <button onClick={() => user && setDoc(doc(db, "users", user.uid), { wordData: words }).then(() => alert("✅"))}>{t[lang].backup}</button>
+        <button onClick={async () => {
+          if (!user) return alert("로그인하세요.");
+          const docSnap = await getDoc(doc(db, "users", user.uid));
+          if (docSnap.exists()) {
+            setWords(docSnap.data().wordData);
+            localStorage.setItem("wordData", JSON.stringify(docSnap.data().wordData));
+            alert("✅ 복원 완료! 새로고침하세요.");
+          }
+        }}>{t[lang].restore}</button>
+        <button onClick={async () => { if (!confirm("정말 로그아웃하시겠습니까?")) return; await signOut(auth); setUser(null); }}>{t[lang].logout}</button>
+        {user && <div>👋 {user.displayName}</div>}
       </div>
 
       <div style={{ marginTop: "1rem" }}>
-        <button onClick={() => toggleSort("abc")}>🔤 ABC 정렬</button>
-        <button onClick={() => toggleSort("count")}>🔢 복습횟수 정렬</button>
+        <button onClick={() => setSortMode(s => s === "abcAsc" ? "abcDesc" : "abcAsc")}>{t[lang].sortABC}</button>
+        <button onClick={() => setSortMode(s => s === "countAsc" ? "countDesc" : "countAsc")}>{t[lang].sortCount}</button>
       </div>
 
       {totalPages > 1 && (
@@ -207,51 +203,23 @@ function App() {
             setInputWord("");
           }
         }}
-        placeholder="Enter a word..."
-        style={{ width: "100%", padding: "0.5rem", marginTop: "1rem" }}
+        placeholder={t[lang].inputPlaceholder}
       />
 
       <div>
         {paginated.map(([word, data]) => (
-          <div
-            key={word}
-            style={{
-              background: "white",
-              borderRadius: "10px",
-              padding: "1rem",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-              marginTop: "1rem",
-              color: "#222"
-            }}
-          >
-            <strong style={{ fontSize: "1.2rem" }}>{word}</strong> (복습 횟수: {data.count})
-            <div style={{ fontSize: "0.85rem", color: "#666" }}>
-              마지막 복습일: {getDaysSince(data.lastReviewedAt) === 0
-                ? "오늘"
-                : `+${getDaysSince(data.lastReviewedAt)}일 전`}
+          <div key={word} className="word-card">
+            <strong>{word}</strong> ({t[lang].studies(data.count)})
+            <div className="meta">
+              {t[lang].lastStudied(getDaysSince(data.lastReviewedAt))}
             </div>
             <div>
-              <a
-                href={`https://www.google.com/search?q=${word}+meaning`}
-                target="_blank"
-                onClick={() => handleReview(word, "dictionary")}
-              >
-                Dictionary
-              </a>
-              <a
-                href={`https://www.google.com/search?q=pronounce+${word}`}
-                target="_blank"
-                style={{ marginLeft: "1rem" }}
-                onClick={() => handleReview(word, "pronunciation")}
-              >
-                Pronunciation
-              </a>
+              <a href={`https://www.google.com/search?q=${word}+meaning`} target="_blank" onClick={() => handleReview(word, "dictionary")}>{t[lang].dictionary}</a>
+              <a href={`https://www.google.com/search?q=pronounce+${word}`} target="_blank" onClick={() => handleReview(word, "pronunciation")} style={{ marginLeft: "1rem" }}>{t[lang].pronunciation}</a>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.5rem" }}>
-              <button onClick={() => handleReview(word, "complete")}>복습 완료</button>
-              <button onClick={() => deleteWord(word)} style={{ color: "red" }}>
-                삭제
-              </button>
+              <button onClick={() => handleReview(word, "complete")}>{t[lang].studyDone}</button>
+              <button onClick={() => deleteWord(word)} style={{ color: "red" }}>{t[lang].delete}</button>
             </div>
           </div>
         ))}
@@ -262,7 +230,7 @@ function App() {
       )}
 
       <div style={{ marginTop: "2rem", fontSize: "0.8rem", color: "#888", textAlign: "center" }}>
-        Version: {__APP_VERSION__}
+        {t[lang].version(__APP_VERSION__)}
       </div>
     </div>
   );
