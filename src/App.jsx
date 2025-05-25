@@ -97,11 +97,19 @@ function App() {
   }, []);
   const getToday = () => new Date().toISOString().slice(0, 10);
   const getDaysSince = (dateString) => {
-    const today = new Date();
-    const past = new Date(dateString);
-    const diffTime = today.getTime() - past.getTime();
-    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  };
+  const today = new Date();
+  const past = new Date(dateString);
+
+  // 날짜 문자열로 잘라서 시간 요소 제거
+  const todayStr = today.toISOString().slice(0, 10);
+  const pastStr = past.toISOString().slice(0, 10);
+
+  const todayDate = new Date(todayStr);
+  const pastDate = new Date(pastStr);
+
+  const diffTime = todayDate.getTime() - pastDate.getTime();
+  return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+};
 
   const addWord = (word) => {
     const lower = word.toLowerCase();
