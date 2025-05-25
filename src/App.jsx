@@ -1,4 +1,3 @@
-// App.jsx – 입력창 type="text" 명시 추가 완료 (CSS 스타일 정상 적용용)
 import { useEffect, useState } from "react";
 import { initializeApp } from "firebase/app";
 import './App.css';
@@ -58,6 +57,8 @@ function App() {
       pronunciation: "발음",
       studyDone: "학습 완료",
       delete: "삭제",
+      confirmDelete: "정말 삭제하시겠습니까?",
+      backupSuccess: "✅ 백업 완료!",
       prev: "이전",
       next: "다음",
       page: (p, t) => `페이지 ${p} / ${t}`,
@@ -80,6 +81,8 @@ function App() {
       pronunciation: "Pronunciation",
       studyDone: "Mark Studied",
       delete: "Delete",
+      confirmDelete: "Are you sure you want to delete this word?",
+      backupSuccess: "✅ Backup complete!",
       prev: "← Prev",
       next: "Next →",
       page: (p, t) => `Page ${p} of ${t}`,
@@ -92,7 +95,6 @@ function App() {
     setWords(saved);
     onAuthStateChanged(auth, (u) => setUser(u));
   }, []);
-
   const getToday = () => new Date().toISOString().slice(0, 10);
   const getDaysSince = (dateString) => {
     const today = new Date();
@@ -161,9 +163,7 @@ function App() {
   return (
     <div style={{ padding: "1rem", fontFamily: "Arial", maxWidth: "700px", margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1>
-          {t[lang].title} ({t[lang].totalWords(Object.keys(words).length)})
-        </h1>
+        <h1>{t[lang].title} ({t[lang].totalWords(Object.keys(words).length)})</h1>
         <button onClick={() => setLang(lang === "ko" ? "en" : "ko")}>
           {lang === "ko" ? "🇺🇸 English" : "🇰🇷 한국어"}
         </button>
@@ -171,7 +171,7 @@ function App() {
 
       <div>
         <button onClick={() => signInWithPopup(auth, provider).then(r => setUser(r.user))}>{t[lang].login}</button>
-        <button onClick={() => user && setDoc(doc(db, "users", user.uid), { wordData: words }).then(() => alert("✅"))}>{t[lang].backup}</button>
+        <button onClick={() => user && setDoc(doc(db, "users", user.uid), { wordData: words }).then(() => alert(t[lang].backupSuccess))}>{t[lang].backup}</button>
         <button onClick={async () => {
           if (!user) return alert("로그인하세요.");
           const docSnap = await getDoc(doc(db, "users", user.uid));
@@ -228,7 +228,14 @@ function App() {
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.5rem" }}>
               <button onClick={() => handleReview(word, "complete")}>{t[lang].studyDone}</button>
-              <button onClick={() => deleteWord(word)} style={{ color: "red" }}>{t[lang].delete}</button>
+              <button
+                onClick={() => {
+                  if (confirm(t[lang].confirmDelete)) deleteWord(word);
+                }}
+                style={{ color: "red" }}
+              >
+                {t[lang].delete}
+              </button>
             </div>
           </div>
         ))}
