@@ -3,17 +3,13 @@
 echo ""
 echo "📦 EchoWord 자동 배포 시작..."
 
-# 0. Git 상태 검사
+# 0. Git 상태 검사 및 자동 커밋
 if [ -n "$(git status --porcelain)" ]; then
-  echo "❗ Git 작업 디렉토리에 변경사항이 있습니다."
-  echo "👉 커밋을 먼저 하거나 변경사항을 정리한 후 다시 실행해주세요."
-  echo ""
-  echo "예시:"
-  echo "  git add ."
-  echo "  git commit -m \"💾 배포 전 변경사항 저장\""
-  echo "  ./deploy.sh"
-  echo ""
-  exit 1
+  echo "💾 변경사항 감지됨. 자동으로 커밋합니다..."
+  git add .
+  git commit -m "💾 배포 전 자동 저장" || echo "⚠️ 커밋 실패 또는 커밋할 변경사항 없음"
+else
+  echo "✅ 변경사항 없음. 커밋 생략"
 fi
 
 # 1. 버전 자동 증가 (패치 단위)
