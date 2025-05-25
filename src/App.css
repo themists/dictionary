@@ -220,3 +220,23 @@ button:disabled {
 .dark-mode .pagination-controls span {
   color: #aaa;
 }
+
+.top-group {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-start;
+}
+
+@media (max-width: 600px) {
+  .row {
+    justify-content: center;
+  }
+}
