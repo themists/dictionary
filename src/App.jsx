@@ -36,7 +36,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [sortMode, setSortMode] = useState("countAsc");
   const [page, setPage] = useState(1);
-  const [lang, setLang] = useState("ko");
+  const [lang, setLang] = useState(() => localStorage.getItem("lang") || "ko");
   const pageSize = 30;
 
   const t = {
@@ -168,8 +168,12 @@ function App() {
     <div style={{ padding: "1rem", fontFamily: "Arial", maxWidth: "700px", margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h1>{t[lang].title} ({t[lang].totalWords(Object.keys(words).length)})</h1>
-        <button onClick={() => setLang(lang === "ko" ? "en" : "ko")}>
-          {lang === "ko" ? "\uD83C\uDDFA\uD83C\uDDF8 English" : "\uD83C\uDDF0\uD83C\uDDF7 \uD55C\uAD6D\uC5B4"}
+        <button onClick={() => {
+          const newLang = lang === "ko" ? "en" : "ko";
+          setLang(newLang);
+          localStorage.setItem("lang", newLang);
+        }}>
+          {lang === "ko" ? "🇺🇸 English" : "🇰🇷 한국어"}
         </button>
       </div>
 
