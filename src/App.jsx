@@ -1,4 +1,4 @@
-// App.jsx - 학습일 위치 및 양식 개선 포함
+// App.jsx – 입력창 type="text" 명시 추가 완료 (CSS 스타일 정상 적용용)
 import { useEffect, useState } from "react";
 import { initializeApp } from "firebase/app";
 import './App.css';
@@ -195,6 +195,7 @@ function App() {
       )}
 
       <input
+        type="text"
         value={inputWord}
         onChange={(e) => setInputWord(e.target.value)}
         onKeyDown={(e) => {
