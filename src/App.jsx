@@ -74,7 +74,7 @@ function App() {
       restore: "Restore",
       sortABC: "Sort: A–Z",
       sortCount: "Sort: Study Count",
-      studies: (n) => `Studied: ${n}x`,
+      studies: (n) => `Studied: ${n} times`,
       lastReviewedLabel: "Last reviewed",
       lastStudied: (days) => days === 0 ? "Today" : `${days} days ago`,
       dictionary: "Dictionary",
