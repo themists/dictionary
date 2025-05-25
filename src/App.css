@@ -15,20 +15,19 @@ h1 {
 
 input[type="text"] {
   width: 100%;
-  padding: 2rem 1.5rem; /* 상하 패딩을 2rem으로, 좌우 패딩을 1.5rem으로 크게 늘림 */
-  font-size: 1.8rem;   /* 글씨 크기를 1.8rem으로 크게 늘림 */
-  font-weight: 500;
+  padding: 0.9rem 1rem;
+  font-size: 1.1rem;
   margin-top: 1.2rem;
   border: 2px solid #999;
   border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   background-color: #fff;
 }
 
-/* 플레이스홀더 텍스트 스타일 추가 */
+/* 플레이스홀더도 너무 크지 않게 조정 */
 input[type="text"]::placeholder {
-  color: #333; /* 플레이스홀더 텍스트 색상을 더 진한 회색(#333)으로 변경 */
-  font-size: 1.8rem; /* 플레이스홀더 텍스트 크기를 입력 필드의 폰트 크기와 동일하게 설정 */
+  color: #555;
+  font-size: 1.1rem;
 }
 
 .button-group {
