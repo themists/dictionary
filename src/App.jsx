@@ -190,7 +190,7 @@ function App() {
       </div>
 
       {totalPages > 1 && (
-        <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
+        <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} t={t[lang]} />
       )}
 
       <input
@@ -226,7 +226,7 @@ function App() {
       </div>
 
       {totalPages > 1 && (
-        <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
+        <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} t={t[lang]} />
       )}
 
       <div style={{ marginTop: "2rem", fontSize: "0.8rem", color: "#888", textAlign: "center" }}>
