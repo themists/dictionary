@@ -37,8 +37,15 @@ function App() {
   const [sortMode, setSortMode] = useState("countAsc");
   const [page, setPage] = useState(1);
   const [lang, setLang] = useState(() => localStorage.getItem("lang") || "ko");
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem("darkMode") === "true";
+  });
   const pageSize = 30;
+
+  useEffect(() => {
+    document.body.classList.toggle("dark-mode", darkMode);
+    localStorage.setItem("darkMode", darkMode);
+  }, [darkMode]);
 
   const t = {
     ko: {
@@ -166,10 +173,13 @@ function App() {
   const totalPages = Math.ceil(sortedEntries.length / pageSize);
 
   return (
-    <div className={`app ${theme}-mode`} style={{ padding: "1rem", fontFamily: "Arial", maxWidth: "700px", margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div style={{ padding: "1rem", fontFamily: "Arial", maxWidth: "700px", margin: "0 auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
         <h1>{t[lang].title} ({t[lang].totalWords(Object.keys(words).length)})</h1>
-        <div>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button onClick={() => setDarkMode(d => !d)}>
+            {darkMode ? "🌙 다크모드 해제" : "🌞 다크모드"}
+          </button>
           <button onClick={() => {
             const newLang = lang === "ko" ? "en" : "ko";
             setLang(newLang);
@@ -177,17 +187,120 @@ function App() {
           }}>
             {lang === "ko" ? "🇺🇸 English" : "🇰🇷 한국어"}
           </button>
-          <button onClick={() => {
-            const newTheme = theme === "light" ? "dark" : "light";
-            setTheme(newTheme);
-            localStorage.setItem("theme", newTheme);
-          }}>
-            {theme === "light" ? "🌙 다크모드" : "☀️ 라이트모드"}
-          </button>
         </div>
       </div>
 
-      ... (중략: 기존 UI 구성은 그대로 유지됩니다) ...
+      <div>
+        {!user && (
+          <button onClick={() => signInWithPopup(auth, provider).then(r => setUser(r.user))}>
+            {t[lang].login}
+          </button>
+        )}
+        {user && (
+          <button onClick={async () => {
+            if (!confirm("정말 로그아웃하시겠습니까?")) return;
+            await signOut(auth);
+            setUser(null);
+          }}>
+            {t[lang].logout}
+          </button>
+        )}
+        {user && (
+          <>
+            <button onClick={() =>
+              setDoc(doc(db, "users", user.uid), { wordData: words })
+                .then(() => alert(t[lang].backupSuccess))
+            }>
+              {t[lang].backup}
+            </button>
+            <button onClick={async () => {
+              const docSnap = await getDoc(doc(db, "users", user.uid));
+              if (docSnap.exists()) {
+                setWords(docSnap.data().wordData);
+                localStorage.setItem("wordData", JSON.stringify(docSnap.data().wordData));
+                alert("✅ 복원 완료! 새로고침하세요.");
+              }
+            }}>
+              {t[lang].restore}
+            </button>
+            <div>👋 {user.displayName}</div>
+          </>
+        )}
+      </div>
+
+      <div style={{ marginTop: "1rem" }}>
+        <button onClick={() => setSortMode(s => s === "abcAsc" ? "abcDesc" : "abcAsc")}>
+          {t[lang].sortABC}
+        </button>
+        <button onClick={() => setSortMode(s => s === "countAsc" ? "countDesc" : "countAsc")}>
+          {t[lang].sortCount}
+        </button>
+      </div>
+
+      {totalPages > 1 && (
+        <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} t={t[lang]} />
+      )}
+
+      <input
+        type="text"
+        value={inputWord}
+        onChange={(e) => setInputWord(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            const word = inputWord.trim().toLowerCase();
+            if (word) addWord(word);
+            setInputWord("");
+          }
+        }}
+        placeholder={t[lang].inputPlaceholder}
+      />
+
+      <div>
+        {paginated.map(([word, data]) => (
+          <div key={word} className="word-card">
+            <div className="word-card-header">
+              <strong>{word}</strong>
+            </div>
+            <div className="word-card-sub">
+              <div>{t[lang].studies(data.count)}</div>
+              <div className="meta">
+                {t[lang].lastReviewedLabel}: {t[lang].lastStudied(getDaysSince(data.lastReviewedAt))}
+              </div>
+            </div>
+            <div>
+              <a href={`https://www.google.com/search?q=${word}+meaning`} target="_blank"
+                 onClick={() => handleReview(word, "dictionary")}>
+                {t[lang].dictionary}
+              </a>
+              <a href={`https://www.google.com/search?q=pronounce+${word}`} target="_blank"
+                 onClick={() => handleReview(word, "pronunciation")}
+                 style={{ marginLeft: "1rem" }}>
+                {t[lang].pronunciation}
+              </a>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.5rem" }}>
+              <button onClick={() => handleReview(word, "complete")}>
+                {t[lang].studyDone}
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm(t[lang].confirmDelete)) deleteWord(word);
+                }}
+                style={{ color: "red" }}>
+                {t[lang].delete}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {totalPages > 1 && (
+        <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} t={t[lang]} />
+      )}
+
+      <div style={{ marginTop: "2rem", fontSize: "0.8rem", color: "#888", textAlign: "center" }}>
+        {t[lang].version(__APP_VERSION__)}
+      </div>
     </div>
   );
 }
