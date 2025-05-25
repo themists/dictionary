@@ -15,15 +15,18 @@ h1 {
 
 input[type="text"] {
   width: 100%;
-  padding: 0.9rem 1rem;
-  font-size: 1.1rem;
-  font-weight: 400;
+  max-width: 630px;           /* 카드와 일치 */
+  padding: 0.65rem 1rem;
+  font-size: 1.05rem;
   margin-top: 1.2rem;
   border: 2px solid #999;
   border-radius: 10px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   background-color: #fff;
-  color: #222;  /* ✅ 입력 텍스트 색 지정 */
+  color: #222;
+  box-sizing: border-box;     /* ✅ border 포함해서 크기 계산 */
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* 플레이스홀더도 너무 크지 않게 조정 */
