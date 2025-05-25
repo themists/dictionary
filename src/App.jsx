@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { initializeApp } from "firebase/app";
+import './App.css';
 import {
   getFirestore,
   doc,
@@ -39,7 +40,6 @@ function App() {
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("wordData")) || {};
-    // ✅ 마이그레이션은 2025-05-25 완료됨. 구조는 고정.
     setWords(saved);
     onAuthStateChanged(auth, (u) => setUser(u));
   }, []);
@@ -63,13 +63,14 @@ function App() {
 
     if (existing) {
       updated[lower] = {
-        count: existing.count + 1,
+        ...existing,
         lastReviewedAt: today
       };
     } else {
       updated[lower] = {
         count: 0,
-        lastReviewedAt: today
+        lastReviewedAt: today,
+        reviewedSources: []
       };
     }
 
@@ -77,15 +78,32 @@ function App() {
     localStorage.setItem("wordData", JSON.stringify(updated));
   };
 
-  const increment = (word) => {
+  const handleReview = (word, sourceType) => {
     const today = getToday();
+    const data = words[word];
+    if (!data) return;
+
+    const isToday = data.lastReviewedAt === today;
+    const reviewed = data.reviewedSources || [];
+
+    const alreadyReviewedToday = isToday && reviewed.length > 0;
+    const alreadyByThisSource = isToday && reviewed.includes(sourceType);
+
+    if (alreadyByThisSource) return;
+
+    const updatedSources = isToday
+      ? [...new Set([...reviewed, sourceType])]
+      : [sourceType];
+
     const updated = {
       ...words,
       [word]: {
-        count: words[word].count + 1,
-        lastReviewedAt: today
+        count: alreadyReviewedToday ? data.count : data.count + 1,
+        lastReviewedAt: today,
+        reviewedSources: updatedSources
       }
     };
+
     setWords(updated);
     localStorage.setItem("wordData", JSON.stringify(updated));
   };
@@ -160,7 +178,7 @@ function App() {
   return (
     <div style={{ padding: "1rem", fontFamily: "Arial" }}>
       <h1>
-        Quick Word Practice (총 {Object.keys(words).length}단어)
+        EchoWord (총 {Object.keys(words).length}단어)
       </h1>
       <div>
         <button onClick={signIn}>🔑 로그인</button>
@@ -213,21 +231,28 @@ function App() {
                 : `+${getDaysSince(data.lastReviewedAt)}일 전`}
             </div>
             <div>
-              <a href={`https://www.google.com/search?q=${word}+meaning`} target="_blank">
+              <a
+                href={`https://www.google.com/search?q=${word}+meaning`}
+                target="_blank"
+                onClick={() => handleReview(word, "dictionary")}
+              >
                 Dictionary
               </a>
               <a
                 href={`https://www.google.com/search?q=pronounce+${word}`}
                 target="_blank"
                 style={{ marginLeft: "1rem" }}
+                onClick={() => handleReview(word, "pronunciation")}
               >
                 Pronunciation
               </a>
             </div>
-            <button onClick={() => increment(word)}>복습 완료</button>
-            <button onClick={() => deleteWord(word)} style={{ color: "red" }}>
-              삭제
-            </button>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.5rem" }}>
+              <button onClick={() => handleReview(word, "complete")}>복습 완료</button>
+              <button onClick={() => deleteWord(word)} style={{ color: "red" }}>
+                삭제
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -235,6 +260,10 @@ function App() {
       {totalPages > 1 && (
         <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
       )}
+
+      <div style={{ marginTop: "2rem", fontSize: "0.8rem", color: "#888", textAlign: "center" }}>
+        Version: {__APP_VERSION__}
+      </div>
     </div>
   );
 }
