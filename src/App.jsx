@@ -1,4 +1,4 @@
-// App.jsx - 다국어 대응 + UI 개선 (입력창 높이, 학습일 우측 정렬 등)
+// App.jsx - 학습일 위치 및 양식 개선 포함
 import { useEffect, useState } from "react";
 import { initializeApp } from "firebase/app";
 import './App.css';
@@ -52,6 +52,7 @@ function App() {
       sortABC: "ABC 정렬",
       sortCount: "학습횟수 정렬",
       studies: (n) => `학습 횟수: ${n}`,
+      lastReviewedLabel: "학습일",
       lastStudied: (days) => days === 0 ? "오늘" : `${days}일 전`,
       dictionary: "사전",
       pronunciation: "발음",
@@ -73,6 +74,7 @@ function App() {
       sortABC: "Sort: A–Z",
       sortCount: "Sort: Study Count",
       studies: (n) => `Studied: ${n}x`,
+      lastReviewedLabel: "Last reviewed",
       lastStudied: (days) => days === 0 ? "Today" : `${days} days ago`,
       dictionary: "Dictionary",
       pronunciation: "Pronunciation",
@@ -210,9 +212,11 @@ function App() {
           <div key={word} className="word-card">
             <div className="word-card-header">
               <strong>{word}</strong>
-              <span className="meta">{t[lang].lastStudied(getDaysSince(data.lastReviewedAt))}</span>
             </div>
-            <div>({t[lang].studies(data.count)})</div>
+            <div className="word-card-sub">
+              <div>{t[lang].studies(data.count)}</div>
+              <div className="meta">{t[lang].lastReviewedLabel}: {t[lang].lastStudied(getDaysSince(data.lastReviewedAt))}</div>
+            </div>
             <div>
               <a href={`https://www.google.com/search?q=${word}+meaning`} target="_blank" onClick={() => handleReview(word, "dictionary")}>
                 {t[lang].dictionary}
