@@ -1,4 +1,4 @@
-// App.jsx - 다국어 대응 + 단어 카드 폭 개선 + 언어 전환 버튼 위치 조정
+// App.jsx - 다국어 대응 + UI 개선 (입력창 높이, 학습일 우측 정렬 등)
 import { useEffect, useState } from "react";
 import { initializeApp } from "firebase/app";
 import './App.css';
@@ -208,13 +208,18 @@ function App() {
       <div>
         {paginated.map(([word, data]) => (
           <div key={word} className="word-card">
-            <strong>{word}</strong> ({t[lang].studies(data.count)})
-            <div className="meta">
-              {t[lang].lastStudied(getDaysSince(data.lastReviewedAt))}
+            <div className="word-card-header">
+              <strong>{word}</strong>
+              <span className="meta">{t[lang].lastStudied(getDaysSince(data.lastReviewedAt))}</span>
             </div>
+            <div>({t[lang].studies(data.count)})</div>
             <div>
-              <a href={`https://www.google.com/search?q=${word}+meaning`} target="_blank" onClick={() => handleReview(word, "dictionary")}>{t[lang].dictionary}</a>
-              <a href={`https://www.google.com/search?q=pronounce+${word}`} target="_blank" onClick={() => handleReview(word, "pronunciation")} style={{ marginLeft: "1rem" }}>{t[lang].pronunciation}</a>
+              <a href={`https://www.google.com/search?q=${word}+meaning`} target="_blank" onClick={() => handleReview(word, "dictionary")}>
+                {t[lang].dictionary}
+              </a>
+              <a href={`https://www.google.com/search?q=pronounce+${word}`} target="_blank" onClick={() => handleReview(word, "pronunciation")} style={{ marginLeft: "1rem" }}>
+                {t[lang].pronunciation}
+              </a>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.5rem" }}>
               <button onClick={() => handleReview(word, "complete")}>{t[lang].studyDone}</button>

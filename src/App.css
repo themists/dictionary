@@ -15,7 +15,7 @@ h1 {
 
 input[type="text"] {
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.75rem 0.5rem; /* 높이 증가 */
   font-size: 1rem;
   margin-top: 1rem;
   border: 1px solid #ccc;
@@ -40,6 +40,12 @@ input[type="text"] {
   box-sizing: border-box;
 }
 
+.word-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .word-card strong {
   font-size: 1.2rem;
 }
@@ -54,7 +60,6 @@ input[type="text"] {
 .word-card .meta {
   font-size: 0.85rem;
   color: #666;
-  margin-top: 0.3rem;
 }
 
 .word-card button {
