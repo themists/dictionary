@@ -92,12 +92,18 @@ function App() {
     .filter(([w]) => w !== highlightedWord)
     .sort(([a, aData], [b, bData]) => {
       switch (sortMode) {
-        case "abcAsc": return a.localeCompare(b);
-        case "abcDesc": return b.localeCompare(a);
-        case "countDesc": return bData.count - aData.count;
-        case "dateAsc": return new Date(aData.lastReviewedAt) - new Date(bData.lastReviewedAt);
-        case "dateDesc": return new Date(bData.lastReviewedAt) - new Date(aData.lastReviewedAt);
-        default: return aData.count - bData.count;
+        case "abcAsc":
+          return a.localeCompare(b);
+        case "abcDesc":
+          return b.localeCompare(a);
+        case "countDesc":
+          return bData.count - aData.count || a.localeCompare(b);
+        case "dateAsc":
+          return new Date(aData.lastReviewedAt) - new Date(bData.lastReviewedAt) || a.localeCompare(b);
+        case "dateDesc":
+          return new Date(bData.lastReviewedAt) - new Date(aData.lastReviewedAt) || a.localeCompare(b);
+        default:
+          return aData.count - bData.count || a.localeCompare(b);
       }
     });
 
