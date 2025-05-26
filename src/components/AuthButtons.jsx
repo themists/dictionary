@@ -36,19 +36,18 @@ function AuthButtons({ user, setUser, auth, provider, db, words, setWords, t, la
         <button onClick={handleLogin}>{t[lang].login}</button>
       )}
       {user && (
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "0.5rem",
-            alignItems: "center",
-            justifyContent: "flex-start" // ✅ 왼쪽 정렬 적용
-          }}
-        >
-          <button onClick={handleLogout}>🚪 </button>
-          <button onClick={handleBackup}>💾 {t[lang].backup}</button>
-          <button onClick={handleRestore}>♻️ {t[lang].restore}</button>
-          <div>👋 {user.displayName}</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          {/* 1줄: 로그아웃 버튼 + 사용자 이름 */}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <button onClick={handleLogout}>🔓 {t[lang].logout}</button>
+            <div>👋 {user.displayName}</div>
+          </div>
+
+          {/* 2줄: 백업 / 복원 버튼 */}
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+            <button onClick={handleBackup}>💾 {t[lang].backup}</button>
+            <button onClick={handleRestore}>♻️ {t[lang].restore}</button>
+          </div>
         </div>
       )}
     </div>
