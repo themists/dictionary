@@ -26,7 +26,7 @@ h1 {
 
 input[type="text"] {
   width: 100%;
-  max-width: 640px;
+  max-width: 640px; /* 이 값은 필요에 따라 조절하거나 삭제 */
   padding: 0.65rem 1rem;
   font-size: 1.05rem;
   margin-top: 1.2rem;
@@ -60,13 +60,45 @@ input[type="text"]::placeholder {
   padding: 1rem;
   margin-top: 1rem;
   color: #222;
-  width: 100%;
-  max-width: 640px;
-  margin-left: auto;
-  margin-right: auto;
+  /* width: 100%; */ /* 100%로 설정하면 body padding에 맞춰짐 */
+  /* max-width: 640px; */ /* 이 줄을 제거하거나 더 큰 값으로 설정 */
+  /* margin-left: auto; */ /* 이 줄을 제거하거나 0으로 설정 */
+  /* margin-right: auto; */ /* 이 줄을 제거하거나 0으로 설정 */
+  width: calc(100% - 1rem); /* body의 0.5rem padding * 2를 고려한 계산 */
+  margin: 1rem auto 0; /* 상단 마진, 좌우 자동 마진으로 중앙 정렬 */
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+}
+
+/* 추가: 모바일 환경에서 .word-card의 폭을 body padding에 맞추기 위한 수정 */
+@media (max-width: 767px) { /* 768px 미만 화면 (모바일) */
+  .word-card {
+    width: calc(100% - 1rem); /* body의 좌우 padding 0.5rem씩을 제외한 폭 */
+    margin-left: 0.5rem; /* body의 좌측 padding과 동일하게 */
+    margin-right: 0.5rem; /* body의 우측 padding과 동일하게 */
+  }
+  input[type="text"] { /* 입력창도 동일하게 여백을 맞춤 */
+    width: calc(100% - 1rem);
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+  }
+}
+
+/* 768px 이상 화면 (데스크탑) */
+@media (min-width: 768px) {
+  .word-card {
+    width: calc(100% - 2rem); /* body의 좌우 padding 1rem씩을 제외한 폭 */
+    max-width: 960px; /* 데스크탑에서 단어 카드의 최대 너비를 더 넓게 설정 (원하는 값으로 변경) */
+    margin-left: 1rem; /* body의 좌측 padding과 동일하게 */
+    margin-right: 1rem; /* body의 우측 padding과 동일하게 */
+  }
+  input[type="text"] { /* 입력창도 동일하게 여백을 맞춤 */
+    width: calc(100% - 2rem);
+    max-width: 960px; /* 입력창의 최대 너비도 단어 카드와 동일하게 설정 */
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
 }
 
 .word-card > * {
