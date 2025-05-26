@@ -22,6 +22,24 @@ h1 {
   margin-bottom: 1rem;
   color: #333;
   text-align: center;
+  margin-right: auto;
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dark-mode-toggle-button,
+.language-toggle-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.2rem;
 }
 
 input[type="text"],
