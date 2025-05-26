@@ -94,7 +94,7 @@ function App() {
   const totalPages = Math.ceil(sortedEntries.length / pageSize);
 
   return (
-    <div style={{ padding: "1rem", fontFamily: "Arial" }}>
+    <div className="container" style={{ padding: "1rem", fontFamily: "Arial" }}>
       {/* 제목 + 다크모드 + 언어 버튼 */}
       <div className="header-row">
         <h1>{t[lang].title} ({t[lang].totalWords(Object.keys(words).length)})</h1>
