@@ -39,7 +39,7 @@ function AuthButtons({ user, setUser, auth, provider, db, words, setWords, t, la
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
           <button onClick={handleBackup}>💾 {t[lang].backup}</button>
           <button onClick={handleRestore}>♻️ {t[lang].restore}</button>
-          <button onClick={handleLogout}> ({t[lang].logout})</button>
+          <button onClick={handleLogout}>🔓 {t[lang].logout}</button>
         </div>
       )}
     </div>
