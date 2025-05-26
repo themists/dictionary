@@ -86,6 +86,8 @@ function App() {
       case "abcAsc": return a.localeCompare(b);
       case "abcDesc": return b.localeCompare(a);
       case "countDesc": return bData.count - aData.count;
+      case "dateAsc": return new Date(aData.lastReviewedAt) - new Date(bData.lastReviewedAt);
+      case "dateDesc": return new Date(bData.lastReviewedAt) - new Date(aData.lastReviewedAt);
       default: return aData.count - bData.count;
     }
   });
@@ -140,6 +142,9 @@ function App() {
           </button>
           <button onClick={() => setSortMode(s => s === "countAsc" ? "countDesc" : "countAsc")}>
             {t[lang].sortCount}
+          </button>
+          <button onClick={() => setSortMode(s => s === "dateAsc" ? "dateDesc" : "dateAsc")}>
+            {t[lang].sortDate}
           </button>
         </div>
       </div>

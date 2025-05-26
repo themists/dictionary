@@ -11,6 +11,7 @@ const t = {
     restore: "복원",
     sortABC: "ABC 정렬",
     sortCount: "학습횟수 정렬",
+    sortDate: "학습일 정렬", // ko
     studies: (n) => `학습 횟수: ${n}`,
     lastReviewedLabel: "학습일",
     lastStudied: (days) => (days === 0 ? "오늘" : `${days}일 전`),
@@ -37,6 +38,7 @@ const t = {
     restore: "Restore",
     sortABC: "Sort: A–Z",
     sortCount: "Sort: Study Count",
+    sortDate: "Sort: Date", // en
     studies: (n) => `Studied: ${n} times`,
     lastReviewedLabel: "Last reviewed",
     lastStudied: (days) => (days === 0 ? "Today" : `${days} days ago`),
