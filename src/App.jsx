@@ -105,7 +105,7 @@ function App() {
             className="dark-mode-toggle-button"
             onClick={() => setDarkMode((prev) => !prev)}
           >
-            {darkMode ? "🌙" : "🌞"}
+            {!darkMode ? "🌙" : "🌞"}
           </button>
           <button
             className="language-toggle-button"
