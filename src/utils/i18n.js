@@ -37,7 +37,7 @@ const t = {
     backup: "Backup",
     restore: "Restore",
     sortABC: "A–Z", // Sort: A–Z
-    sortCount: "Count", // Sort: Study Count
+    sortCount: "Studied", // Sort: Study Count
     sortDate: "Reviewed", // Sort: Date
     studies: (n) => `Studied: ${n} times`,
     lastReviewedLabel: "Last reviewed",
