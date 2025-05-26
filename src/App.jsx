@@ -97,7 +97,7 @@ function App() {
     <div className="container" style={{ padding: "1rem", fontFamily: "Arial" }}>
       {/* 제목 + 다크모드 + 언어 버튼 */}
       <div className="header-row">
-        <h1>{t[lang].title} ({t[lang].totalWords(Object.keys(words).length)})</h1>
+        <h1>EchoWord ({Object.keys(words).length} words)</h1>
         <div style={{ display: "flex", gap: "0.5rem" }}>
           <button
             className="dark-mode-toggle-button"
