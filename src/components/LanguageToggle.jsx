@@ -8,8 +8,11 @@ function LanguageToggle({ lang, setLang }) {
   };
 
   return (
-    <button onClick={handleToggle}>
-      {lang === "ko" ? "🇺🇸 " : "🇰🇷 "}
+    <button
+      className="language-toggle-button"
+      onClick={handleToggle}
+    >
+      {lang === "ko" ? "🇺🇸" : "🇰🇷"}
     </button>
   );
 }

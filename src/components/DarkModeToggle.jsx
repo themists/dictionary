@@ -2,8 +2,11 @@
 // 다크모드 토글 버튼
 function DarkModeToggle({ darkMode, setDarkMode }) {
   return (
-    <button onClick={() => setDarkMode((prev) => !prev)}>
-      {darkMode ? "🌙 " : "🌞 "}
+    <button
+      className="dark-mode-toggle-button"
+      onClick={() => setDarkMode((prev) => !prev)}
+    >
+      {darkMode ? "🌙" : "🌞"}
     </button>
   );
 }
