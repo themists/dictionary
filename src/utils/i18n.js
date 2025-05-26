@@ -9,9 +9,9 @@ const t = {
     logout: "로그아웃",
     backup: "백업",
     restore: "복원",
-    sortABC: "ABC 정렬",
-    sortCount: "학습횟수 정렬",
-    sortDate: "학습일 정렬", // ko
+    sortABC: "A–Z",
+    sortCount: "횟수", // 학습횟수 정렬
+    sortDate: "날짜", // 학습일 정렬
     studies: (n) => `학습 횟수: ${n}`,
     lastReviewedLabel: "학습일",
     lastStudied: (days) => (days === 0 ? "오늘" : `${days}일 전`),
@@ -36,9 +36,9 @@ const t = {
     logout: "Sign Out",
     backup: "Backup",
     restore: "Restore",
-    sortABC: "Sort: A–Z",
-    sortCount: "Sort: Study Count",
-    sortDate: "Sort: Date", // en
+    sortABC: "A–Z", // Sort: A–Z
+    sortCount: "Count", // Sort: Study Count
+    sortDate: "Date", // Sort: Date
     studies: (n) => `Studied: ${n} times`,
     lastReviewedLabel: "Last reviewed",
     lastStudied: (days) => (days === 0 ? "Today" : `${days} days ago`),
