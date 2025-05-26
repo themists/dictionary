@@ -9,7 +9,7 @@ function LanguageToggle({ lang, setLang }) {
 
   return (
     <button onClick={handleToggle}>
-      {lang === "ko" ? "🇺🇸" : "🇰🇷"}
+      {lang === "ko" ? "🇺🇸 " : "🇰🇷 "}
     </button>
   );
 }

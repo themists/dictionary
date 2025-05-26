@@ -3,7 +3,7 @@
 function DarkModeToggle({ darkMode, setDarkMode }) {
   return (
     <button onClick={() => setDarkMode((prev) => !prev)}>
-      {darkMode ? "🌙" : "🌞"}
+      {darkMode ? "🌙 " : "🌞 "}
     </button>
   );
 }
