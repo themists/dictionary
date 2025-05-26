@@ -5,9 +5,12 @@ import { db, auth, provider } from "./utils/firebase";
 import { getDoc, setDoc, doc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
-import PaginationControls from "./components/PaginationControls";
-import WordCard from "./components/WordCard";
+import HeaderBar from "./components/HeaderBar";
 import AuthButtons from "./components/AuthButtons";
+import SortControls from "./components/SortControls";
+import PaginationBlock from "./components/PaginationBlock";
+import WordInput from "./components/WordInput";
+import WordList from "./components/WordList";
 
 import { getToday, getDaysSince } from "./utils/dateUtils";
 import t from "./utils/i18n";
@@ -97,30 +100,14 @@ function App() {
 
   return (
     <div className="container" style={{ padding: "1rem", fontFamily: "Arial" }}>
-      {/* 제목 + 다크모드 + 언어 버튼 */}
-      <div className="header-row">
-        <h1>EchoWord ({Object.keys(words).length} words)</h1>
-        <div style={{ display: "flex", gap: "0.5rem" }}>
-          <button
-            className="dark-mode-toggle-button"
-            onClick={() => setDarkMode((prev) => !prev)}
-          >
-            {!darkMode ? "🌙" : "🌞"}
-          </button>
-          <button
-            className="language-toggle-button"
-            onClick={() => {
-              const newLang = lang === "ko" ? "en" : "ko";
-              setLang(newLang);
-              localStorage.setItem("lang", newLang);
-            }}
-          >
-            {lang === "ko" ? "🇺🇸" : "🇰🇷"}
-          </button>
-        </div>
-      </div>
+      <HeaderBar
+        wordCount={Object.keys(words).length}
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+        lang={lang}
+        setLang={setLang}
+      />
 
-      {/* 상단 버튼 그룹 */}
       <div className="top-group">
         <div className="row">
           <AuthButtons
@@ -136,59 +123,28 @@ function App() {
           />
         </div>
 
-        {/* 정렬 기준 라인 */}
-        <div className="row" style={{ alignItems: "center" }}>
-          <span style={{ fontWeight: "bold", marginRight: "0.5rem" }}>
-            {lang === "ko" ? "정렬" : "Sort"}
-          </span>
-          <button onClick={() => setSortMode(s => s === "abcAsc" ? "abcDesc" : "abcAsc")}>
-            {t[lang].sortABC}
-          </button>
-          <button onClick={() => setSortMode(s => s === "countAsc" ? "countDesc" : "countAsc")}>
-            {t[lang].sortCount}
-          </button>
-          <button onClick={() => setSortMode(s => s === "dateAsc" ? "dateDesc" : "dateAsc")}>
-            {t[lang].sortDate}
-          </button>
-        </div>
+        <SortControls sortMode={sortMode} setSortMode={setSortMode} lang={lang} t={t} />
       </div>
 
-      {totalPages > 1 && (
-        <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} t={t[lang]} />
-      )}
+      <PaginationBlock totalPages={totalPages} page={page} setPage={setPage} t={t[lang]} />
 
-      <input
-        type="text"
-        value={inputWord}
-        onChange={(e) => setInputWord(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            const word = inputWord.trim().toLowerCase();
-            if (word) addWord(word);
-            setInputWord("");
-          }
-        }}
+      <WordInput
+        inputWord={inputWord}
+        setInputWord={setInputWord}
+        onAddWord={addWord}
         placeholder={t[lang].inputPlaceholder}
       />
 
-      <div>
-        {paginated.map(([word, data]) => (
-          <WordCard
-            key={word}
-            word={word}
-            data={data}
-            lang={lang}
-            t={t}
-            getDaysSince={getDaysSince}
-            onReview={handleReview}
-            onDelete={deleteWord}
-          />
-        ))}
-      </div>
+      <WordList
+        words={paginated}
+        lang={lang}
+        t={t}
+        getDaysSince={getDaysSince}
+        onReview={handleReview}
+        onDelete={deleteWord}
+      />
 
-      {totalPages > 1 && (
-        <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} t={t[lang]} />
-      )}
+      <PaginationBlock totalPages={totalPages} page={page} setPage={setPage} t={t[lang]} />
 
       <div style={{ marginTop: "2rem", fontSize: "0.8rem", color: "#888", textAlign: "center" }}>
         {t[lang].version(__APP_VERSION__)}
