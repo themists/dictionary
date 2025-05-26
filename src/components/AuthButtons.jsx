@@ -1,5 +1,5 @@
 // src/components/AuthButtons.jsx
-// 로그인 / 백업 / 복원 버튼
+// 로그인 / 백업 / 복원 / 로그아웃 버튼 (1줄 정렬 + 사용자 이름 통합)
 import { signInWithPopup, signOut } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 
@@ -36,18 +36,12 @@ function AuthButtons({ user, setUser, auth, provider, db, words, setWords, t, la
         <button onClick={handleLogin}>{t[lang].login}</button>
       )}
       {user && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-          {/* 1줄: 로그아웃 버튼 + 사용자 이름 */}
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <button onClick={handleLogout}>🔓 {t[lang].logout}</button>
-            <div>👋 {user.displayName}</div>
-          </div>
-
-          {/* 2줄: 백업 / 복원 버튼 */}
-          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-            <button onClick={handleBackup}>💾 {t[lang].backup}</button>
-            <button onClick={handleRestore}>♻️ {t[lang].restore}</button>
-          </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
+          <button onClick={handleBackup}>💾 {t[lang].backup}</button>
+          <button onClick={handleRestore}>♻️ {t[lang].restore}</button>
+          <button onClick={handleLogout}>
+            👋 {user.displayName} ({t[lang].logout})
+          </button>
         </div>
       )}
     </div>
