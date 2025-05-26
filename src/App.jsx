@@ -23,6 +23,8 @@ function App() {
   const [page, setPage] = useState(1);
   const [lang, setLang] = useState(() => localStorage.getItem("lang") || "ko");
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
+  const [highlightedWord, setHighlightedWord] = useState(null);
+
   const pageSize = 30;
 
   useEffect(() => {
@@ -47,6 +49,8 @@ function App() {
       updated[lower] = { count: 0, lastReviewedAt: today, reviewedSources: [] };
     }
     setWords(updated);
+    setHighlightedWord(lower);
+    setPage(1);
     localStorage.setItem("wordData", JSON.stringify(updated));
   };
 
@@ -84,19 +88,25 @@ function App() {
     localStorage.setItem("wordData", JSON.stringify(updated));
   };
 
-  const sortedEntries = Object.entries(words).sort(([a, aData], [b, bData]) => {
-    switch (sortMode) {
-      case "abcAsc": return a.localeCompare(b);
-      case "abcDesc": return b.localeCompare(a);
-      case "countDesc": return bData.count - aData.count;
-      case "dateAsc": return new Date(aData.lastReviewedAt) - new Date(bData.lastReviewedAt);
-      case "dateDesc": return new Date(bData.lastReviewedAt) - new Date(aData.lastReviewedAt);
-      default: return aData.count - bData.count;
-    }
-  });
+  const sortedEntries = Object.entries(words)
+    .filter(([w]) => w !== highlightedWord)
+    .sort(([a, aData], [b, bData]) => {
+      switch (sortMode) {
+        case "abcAsc": return a.localeCompare(b);
+        case "abcDesc": return b.localeCompare(a);
+        case "countDesc": return bData.count - aData.count;
+        case "dateAsc": return new Date(aData.lastReviewedAt) - new Date(bData.lastReviewedAt);
+        case "dateDesc": return new Date(bData.lastReviewedAt) - new Date(aData.lastReviewedAt);
+        default: return aData.count - bData.count;
+      }
+    });
 
-  const paginated = sortedEntries.slice((page - 1) * pageSize, page * pageSize);
-  const totalPages = Math.ceil(sortedEntries.length / pageSize);
+  const withHighlight = highlightedWord && words[highlightedWord]
+    ? [[highlightedWord, words[highlightedWord]], ...sortedEntries]
+    : sortedEntries;
+
+  const paginated = withHighlight.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = Math.ceil(withHighlight.length / pageSize);
 
   return (
     <div className="container" style={{ padding: "1rem", fontFamily: "Arial" }}>
