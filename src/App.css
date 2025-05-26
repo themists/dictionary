@@ -76,10 +76,10 @@ input[type="text"]::placeholder {
 @media (min-width: 768px) {
   input[type="text"],
   .word-card {
-    width: calc(100% - 2rem); /* 데스크탑: body의 1rem padding * 2를 고려한 너비 */
-    max-width: 960px; /* 데스크탑에서 단어 카드 및 입력창의 최대 너비를 더 넓게 설정 (이 값은 조절 가능) */
-    margin-left: auto; /* 중앙 정렬 */
-    margin-right: auto; /* 중앙 정렬 */
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
   }
 }
 
