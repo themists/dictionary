@@ -1,4 +1,6 @@
-function PaginationControls({ page, totalPages, onPageChange }) {
+// src/components/PaginationControls.jsx
+
+function PaginationControls({ page, totalPages, onPageChange, t }) {
   return (
     <div className="pagination-controls">
       <button onClick={() => onPageChange(1)} disabled={page === 1}>
@@ -11,7 +13,7 @@ function PaginationControls({ page, totalPages, onPageChange }) {
         ◀
       </button>
       <span>
-        페이지 {page} / {totalPages}
+        {t.page(page, totalPages)}
       </span>
       <button
         onClick={() => onPageChange(Math.min(totalPages, page + 1))}
