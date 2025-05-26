@@ -24,7 +24,10 @@ npm run build
 echo "🚀 GitHub Pages에 배포 중..."
 npm run deploy
 
+# 4. 최종 상태 확인
+echo ""
 echo "✅ 배포 완료!"
 echo "🔎 현재 버전:"
-npm pkg get version
+CURRENT_VERSION=$(npm pkg get version | tr -d '"')
+echo "📌 version: $CURRENT_VERSION"
 echo ""
