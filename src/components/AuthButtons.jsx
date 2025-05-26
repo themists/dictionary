@@ -36,16 +36,12 @@ function AuthButtons({ user, setUser, auth, provider, db, words, setWords, t, la
         <button onClick={handleLogin}>{t[lang].login}</button>
       )}
       {user && (
-        <>
-          <button onClick={handleLogout}>{t[lang].logout}</button>
-          <button onClick={handleBackup} title={t[lang].backup}>
-          💾 Backup
-          </button>
-          <button onClick={handleRestore} title={t[lang].restore}>
-          ♻️ Restore
-          </button>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
+          <button onClick={handleLogout}>🚪 {t[lang].logout}</button>
+          <button onClick={handleBackup}>💾 {t[lang].backup}</button>
+          <button onClick={handleRestore}>♻️ {t[lang].restore}</button>
           <div>👋 {user.displayName}</div>
-        </>
+        </div>
       )}
     </div>
   );
