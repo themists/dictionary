@@ -45,7 +45,7 @@ function AuthButtons({ user, setUser, auth, provider, db, words, setWords, t, la
             justifyContent: "flex-start" // ✅ 왼쪽 정렬 적용
           }}
         >
-          <button onClick={handleLogout}>🚪 {t[lang].logout}</button>
+          <button onClick={handleLogout}>🚪 </button>
           <button onClick={handleBackup}>💾 {t[lang].backup}</button>
           <button onClick={handleRestore}>♻️ {t[lang].restore}</button>
           <div>👋 {user.displayName}</div>
