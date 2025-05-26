@@ -136,7 +136,11 @@ function App() {
           />
         </div>
 
-        <div className="row">
+        {/* 정렬 기준 라인 */}
+        <div className="row" style={{ alignItems: "center" }}>
+          <span style={{ fontWeight: "bold", marginRight: "0.5rem" }}>
+            {lang === "ko" ? "정렬" : "Sort"}
+          </span>
           <button onClick={() => setSortMode(s => s === "abcAsc" ? "abcDesc" : "abcAsc")}>
             {t[lang].sortABC}
           </button>
