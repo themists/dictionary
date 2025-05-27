@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 import { db, auth, provider } from "./utils/firebase";
-import { getDoc, setDoc, doc, collection, getDocs, deleteDoc } from "firebase/firestore"; // Added collection, getDocs, deleteDoc
+import {
+  getDoc, setDoc, doc, collection,
+  getDocs, deleteDoc, updateDoc, deleteField
+} from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 import HeaderBar from "./components/HeaderBar";
@@ -27,62 +30,59 @@ function App() {
 
   const pageSize = 30;
 
+  // 다크모드 설정 반영
   useEffect(() => {
     document.body.classList.toggle("dark-mode", darkMode);
     localStorage.setItem("darkMode", darkMode);
   }, [darkMode]);
 
+  // Firebase 사용자 인증 및 데이터 마이그레이션 처리
   useEffect(() => {
-    onAuthStateChanged(auth, async (u) => {
+    const handleUserAuth = async (u) => {
       setUser(u);
-      if (u) {
-        try {
-          // 🔁 기존 데이터가 남아 있다면 한 번만 마이그레이션
-          const oldDocSnap = await getDoc(doc(db, "users", u.uid));
-          if (oldDocSnap.exists() && oldDocSnap.data().wordData) {
-            const oldData = oldDocSnap.data().wordData;
-            for (const [word, data] of Object.entries(oldData)) {
-              const wordRef = doc(db, "users", u.uid, "words", word);
-              if (!data.createdAt) {
-                data.createdAt = "2024-05-20";
-              }
-              await setDoc(wordRef, data);
-            }
-            console.log("📦 마이그레이션 완료");
-            // 마이그레이션 후 기존 wordData 필드 삭제 (선택 사항이지만 권장)
-            // await updateDoc(doc(db, "users", u.uid), { wordData: deleteField() });
-          }
-
-          const querySnapshot = await getDocs(collection(db, "users", u.uid, "words"));
-          const wordMap = {};
-          querySnapshot.forEach((d) => { // Changed doc to d to avoid conflict with imported doc
-            wordMap[d.id] = d.data();
-          });
-          setWords(wordMap);
-          localStorage.setItem("wordData", JSON.stringify(wordMap));
-          console.log("🔄 자동 복원 완료");
-        } catch (err) {
-          console.error("🔥 자동 복원 오류:", err);
-        }
-      } else {
-        // Clear words and local storage if user logs out
+      if (!u) {
         setWords({});
         localStorage.removeItem("wordData");
+        return;
       }
-    });
-  }, []); // Empty dependency array means this runs once on mount
 
-  // autoBackup function is now redundant as we are saving/updating words individually
-  // const autoBackup = async (updatedWords) => {
-  //   if (user) {
-  //     try {
-  //       await setDoc(doc(db, "users", user.uid), { wordData: updatedWords });
-  //       console.log("💾 자동 백업 완료");
-  //     } catch (err) {
-  //       console.error("💥 자동 백업 실패:", err);
-  //     }
-  //   }
-  // };
+      try {
+        const userDocRef = doc(db, "users", u.uid);
+        const oldDocSnap = await getDoc(userDocRef);
+
+        // 🔁 마이그레이션 조건 확인 및 실행
+        if (oldDocSnap.exists()) {
+          const data = oldDocSnap.data();
+          if (data.wordData) {
+            for (const [word, value] of Object.entries(data.wordData)) {
+              const wordRef = doc(db, "users", u.uid, "words", word);
+              if (!value.createdAt) value.createdAt = "2024-05-20";
+              await setDoc(wordRef, value);
+            }
+            console.log("📦 마이그레이션 완료");
+
+            // 마이그레이션 후 기존 필드 제거
+            await updateDoc(userDocRef, { wordData: deleteField() });
+          }
+        }
+
+        // 🔄 최신 구조로 복원
+        const querySnapshot = await getDocs(collection(db, "users", u.uid, "words"));
+        const wordMap = {};
+        querySnapshot.forEach((doc) => {
+          wordMap[doc.id] = doc.data();
+        });
+        setWords(wordMap);
+        localStorage.setItem("wordData", JSON.stringify(wordMap));
+        console.log("✅ 자동 복원 완료");
+      } catch (err) {
+        console.error("🔥 마이그레이션/복원 실패:", err);
+      }
+    };
+
+    const unsubscribe = onAuthStateChanged(auth, handleUserAuth);
+    return () => unsubscribe();
+  }, []);
 
   const addWord = async (word) => {
     const lower = word.toLowerCase();
@@ -92,14 +92,18 @@ function App() {
     if (existing) {
       updated[lower] = { ...existing, lastReviewedAt: today };
     } else {
-      updated[lower] = { count: 0, lastReviewedAt: today, reviewedSources: [], createdAt: '2024-05-20' };
+      updated[lower] = {
+        count: 0,
+        lastReviewedAt: today,
+        reviewedSources: [],
+        createdAt: "2024-05-20"
+      };
     }
     setWords(updated);
     setHighlightedWord(lower);
     setPage(1);
     localStorage.setItem("wordData", JSON.stringify(updated));
 
-    // 🔁 Firestore에 단어별로 저장
     if (user) {
       try {
         await setDoc(doc(db, "users", user.uid, "words", lower), updated[lower]);
@@ -117,9 +121,8 @@ function App() {
 
     const isToday = data.lastReviewedAt === today;
     const reviewed = data.reviewedSources || [];
-    // const alreadyReviewedToday = isToday && reviewed.length > 0; // This logic might be flawed if you want to increment count only once per day
     const alreadyByThisSource = isToday && reviewed.includes(sourceType);
-    if (alreadyByThisSource) return; // Prevent double review from the same source on the same day
+    if (alreadyByThisSource) return;
 
     const updatedSources = isToday
       ? [...new Set([...reviewed, sourceType])]
@@ -127,8 +130,9 @@ function App() {
 
     const updatedWord = {
       ...data,
-      // Increment count only if it's the first review of the day or first review from this source today
-      count: isToday && reviewed.length > 0 && !alreadyByThisSource ? data.count : data.count + 1,
+      count: isToday && reviewed.length > 0 && !alreadyByThisSource
+        ? data.count
+        : data.count + 1,
       lastReviewedAt: today,
       reviewedSources: updatedSources
     };
@@ -177,15 +181,10 @@ function App() {
         case "countDesc":
           return bData.count - aData.count || a.localeCompare(b);
         case "dateAsc":
-          // Ensure dates are parsed correctly or handle potential invalid dates
-          const dateA_asc = new Date(aData.lastReviewedAt);
-          const dateB_asc = new Date(bData.lastReviewedAt);
-          return (isNaN(dateA_asc) ? 0 : dateA_asc.getTime()) - (isNaN(dateB_asc) ? 0 : dateB_asc.getTime()) || a.localeCompare(b);
+          return new Date(aData.lastReviewedAt) - new Date(bData.lastReviewedAt) || a.localeCompare(b);
         case "dateDesc":
-          const dateA_desc = new Date(aData.lastReviewedAt);
-          const dateB_desc = new Date(bData.lastReviewedAt);
-          return (isNaN(dateB_desc) ? 0 : dateB_desc.getTime()) - (isNaN(dateA_desc) ? 0 : dateA_desc.getTime()) || a.localeCompare(b);
-        default: // countAsc
+          return new Date(bData.lastReviewedAt) - new Date(aData.lastReviewedAt) || a.localeCompare(b);
+        default:
           return aData.count - bData.count || a.localeCompare(b);
       }
     });
@@ -246,7 +245,9 @@ function App() {
       <PaginationBlock totalPages={totalPages} page={page} setPage={setPage} t={t[lang]} />
 
       <div style={{ marginTop: "2rem", fontSize: "0.8rem", color: "#888", textAlign: "center" }}>
-        {t[lang].version(__APP_VERSION__)}
+        {/* 버전 표기 필요 시 환경변수로 교체 */}
+        {/* {t[lang].version(import.meta.env.VITE_APP_VERSION)} */}
+        {t[lang].version("v1.0.0")}
       </div>
     </div>
   );
