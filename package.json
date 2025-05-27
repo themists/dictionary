@@ -4,11 +4,12 @@
   "private": true,
   "homepage": "https://themists.github.io/dictionary",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "deploy": "gh-pages -d dist"
-  },
+  "dev": "vite",
+  "build": "npm run sync-version && vite build",
+  "preview": "vite preview",
+  "deploy": "gh-pages -d dist",
+  "sync-version": "node tools/sync-version.js"
+},
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",
     "gh-pages": "^6.3.0",
