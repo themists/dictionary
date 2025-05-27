@@ -6,7 +6,6 @@ import {
   getDoc, setDoc, doc, collection,
   getDocs, deleteDoc, updateDoc, deleteField
 } from "firebase/firestore";
-import { updateDoc, deleteField } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 import HeaderBar from "./components/HeaderBar";
