@@ -2,10 +2,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 import { db, auth, provider } from "./utils/firebase";
-import {
-  getDoc, setDoc, doc, collection,
-  getDocs, deleteDoc, updateDoc, deleteField
-} from "firebase/firestore";
+import { setDoc, deleteDoc, doc, getDocs, collection } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 import HeaderBar from "./components/HeaderBar";
@@ -30,79 +27,25 @@ function App() {
 
   const pageSize = 30;
 
-  // 다크모드 설정 반영
+  // 다크모드 적용
   useEffect(() => {
     document.body.classList.toggle("dark-mode", darkMode);
     localStorage.setItem("darkMode", darkMode);
   }, [darkMode]);
 
-  // Firebase 사용자 인증 및 데이터 마이그레이션 처리
-
-useEffect(() => {
-  const handleUserAuth = async (u) => {
-    console.log("🧩 로그인 유저:", u?.uid);
-    setUser(u);
-
-    if (!u) {
-      setWords({});
-      localStorage.removeItem("wordData");
-      return;
-    }
-
-    try {
-      const userDocRef = doc(db, "users", u.uid);
-      const oldDocSnap = await getDoc(userDocRef);
-
-      console.log("📄 유저 문서 읽음:", oldDocSnap.exists());
-
-      if (oldDocSnap.exists()) {
-        const data = oldDocSnap.data();
-        console.log("🧾 문서 데이터:", data);
-
-        if (data.wordData) {
-          console.log("🚀 마이그레이션 대상 단어 수:", Object.keys(data.wordData).length);
-
-          for (const [word, value] of Object.entries(data.wordData)) {
-            console.log("🔄 마이그레이션 중:", word);
-            const wordRef = doc(db, "users", u.uid, "words", word);
-            if (!value.createdAt) value.createdAt = "2024-05-20";
-            await setDoc(wordRef, value);
-          }
-
-          console.log("✅ 마이그레이션 완료");
-
-          await updateDoc(userDocRef, { wordData: deleteField() });
-          console.log("🧹 wordData 삭제 완료");
-        } else {
-          console.log("🚫 wordData 없음");
-        }
-      }
-
-      // 🔄 복원: 단어 하위 컬렉션에서 불러오기
-      const querySnapshot = await getDocs(collection(db, "users", u.uid, "words"));
-      const wordMap = {};
-      querySnapshot.forEach((doc) => {
-        wordMap[doc.id] = doc.data();
-      });
-
-      setWords(wordMap);
-      localStorage.setItem("wordData", JSON.stringify(wordMap));
-      console.log("✅ 자동 복원 완료");
-    } catch (err) {
-      console.error("🔥 마이그레이션/복원 중 오류 발생:", err);
-    }
-  };
-
-  const unsubscribe = onAuthStateChanged(auth, handleUserAuth);
-  return () => unsubscribe();
-}, []);
-
+  // 자동 복원 (마이그레이션 없음, 병합은 AuthButtons에서 수동 처리)
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("wordData")) || {};
+    setWords(saved);
+    onAuthStateChanged(auth, (u) => setUser(u));
+  }, []);
 
   const addWord = async (word) => {
     const lower = word.toLowerCase();
     const today = getToday();
     const existing = words[lower];
     const updated = { ...words };
+
     if (existing) {
       updated[lower] = { ...existing, lastReviewedAt: today };
     } else {
@@ -113,6 +56,7 @@ useEffect(() => {
         createdAt: "2024-05-20"
       };
     }
+
     setWords(updated);
     setHighlightedWord(lower);
     setPage(1);
@@ -155,6 +99,7 @@ useEffect(() => {
       ...words,
       [word]: updatedWord
     };
+
     setWords(updated);
     localStorage.setItem("wordData", JSON.stringify(updated));
 
@@ -259,8 +204,6 @@ useEffect(() => {
       <PaginationBlock totalPages={totalPages} page={page} setPage={setPage} t={t[lang]} />
 
       <div style={{ marginTop: "2rem", fontSize: "0.8rem", color: "#888", textAlign: "center" }}>
-        {/* 버전 표기 필요 시 환경변수로 교체 */}
-        {/* {t[lang].version(import.meta.env.VITE_APP_VERSION)} */}
         {t[lang].version("v1.0.0")}
       </div>
     </div>
