@@ -2,9 +2,6 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 import { db, auth, provider } from "./utils/firebase";
-import { setDoc, deleteDoc, doc, getDocs, collection } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
-
 import HeaderBar from "./components/HeaderBar";
 import AuthButtons from "./components/AuthButtons";
 import SortControls from "./components/SortControls";
@@ -12,8 +9,11 @@ import PaginationBlock from "./components/PaginationBlock";
 import WordInput from "./components/WordInput";
 import WordList from "./components/WordList";
 
-import { getToday, getDaysSince } from "./utils/dateUtils";
+import { getDaysSince } from "./utils/dateUtils";
 import t from "./utils/i18n";
+
+import useSyncWithFirebase from "./hooks/useSyncWithFirebase";
+import useWordActions from "./hooks/useWordActions";
 
 function App() {
   const [words, setWords] = useState({});
@@ -44,138 +44,10 @@ function App() {
     }
   }, []);
 
-  // 🔄 로그인 시 Firestore와 localStorage 병합
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (u) => {
-      setUser(u);
-      if (!u) return;
+  // 🔄 Firebase와 로그인 감지 및 동기화
+  useSyncWithFirebase({ auth, db, setUser, setWords });
 
-      try {
-        const querySnapshot = await getDocs(collection(db, "users", u.uid, "words"));
-        const firestoreWords = {};
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (data?.lastReviewedAt) {
-            firestoreWords[doc.id] = data;
-          }
-        });
-
-        const localWords = JSON.parse(localStorage.getItem("wordData") || "{}");
-        const merged = { ...firestoreWords };
-
-        for (const [word, localData] of Object.entries(localWords)) {
-          const remoteData = firestoreWords[word];
-          if (!localData || typeof localData !== "object") continue;
-
-          const localDate = new Date(localData.lastReviewedAt || "2000-01-01");
-          const remoteDate = new Date(remoteData?.lastReviewedAt || "2000-01-01");
-
-          if (!remoteData || localDate > remoteDate) {
-            merged[word] = localData;
-          }
-        }
-
-        setWords(merged);
-        localStorage.setItem("wordData", JSON.stringify(merged));
-        console.log("🔁 자동 복원 병합 완료");
-      } catch (err) {
-        console.error("❌ 자동 복원 중 오류:", err);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const addWord = async (word) => {
-    const lower = word.toLowerCase().trim();
-    if (!lower) return;
-
-    const today = getToday();
-    const existing = words[lower];
-    const updated = { ...words };
-
-    if (existing) {
-      updated[lower] = { ...existing, lastReviewedAt: today };
-    } else {
-      updated[lower] = {
-        count: 0,
-        lastReviewedAt: today,
-        reviewedSources: [],
-        createdAt: today
-      };
-    }
-
-    setWords(updated);
-    setHighlightedWord(lower);
-    setPage(1);
-    localStorage.setItem("wordData", JSON.stringify(updated));
-
-    if (user) {
-      try {
-        await setDoc(doc(db, "users", user.uid, "words", lower), updated[lower]);
-        console.log("📘 단어 저장 완료:", lower);
-      } catch (err) {
-        console.error("❌ 단어 Firestore 저장 실패:", err);
-      }
-    }
-  };
-
-  const handleReview = async (word, sourceType) => {
-    const today = getToday();
-    const data = words[word];
-    if (!data) return;
-
-    const isToday = data.lastReviewedAt === today;
-    const reviewed = Array.isArray(data.reviewedSources) ? data.reviewedSources : [];
-    const alreadyByThisSource = isToday && reviewed.includes(sourceType);
-    if (alreadyByThisSource) return;
-
-    const updatedSources = isToday
-      ? [...new Set([...reviewed, sourceType])]
-      : [sourceType];
-
-    const updatedWord = {
-      ...data,
-      count: isToday && reviewed.length > 0 && !alreadyByThisSource
-        ? data.count
-        : data.count + 1,
-      lastReviewedAt: today,
-      reviewedSources: updatedSources
-    };
-
-    const updated = {
-      ...words,
-      [word]: updatedWord
-    };
-
-    setWords(updated);
-    localStorage.setItem("wordData", JSON.stringify(updated));
-
-    if (user) {
-      try {
-        await setDoc(doc(db, "users", user.uid, "words", word), updatedWord);
-        console.log("📘 복습 저장 완료:", word);
-      } catch (err) {
-        console.error("❌ 복습 저장 실패:", err);
-      }
-    }
-  };
-
-  const deleteWord = async (word) => {
-    const updated = { ...words };
-    delete updated[word];
-    setWords(updated);
-    localStorage.setItem("wordData", JSON.stringify(updated));
-
-    if (user) {
-      try {
-        await deleteDoc(doc(db, "users", user.uid, "words", word));
-        console.log("🗑️ 단어 삭제 완료:", word);
-      } catch (err) {
-        console.error("❌ 단어 삭제 실패:", err);
-      }
-    }
-  };
+  const { addWord, handleReview, deleteWord } = useWordActions({ words, setWords, user, db });
 
   const sortedEntries = Object.entries(words)
     .filter(([w]) => w !== highlightedWord)
@@ -236,7 +108,7 @@ function App() {
       <WordInput
         inputWord={inputWord}
         setInputWord={setInputWord}
-        onAddWord={addWord}
+        onAddWord={(word) => addWord(word, setHighlightedWord, setPage)}
         placeholder={t[lang].inputPlaceholder}
       />
 
