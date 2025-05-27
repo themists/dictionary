@@ -1,5 +1,4 @@
 // src/components/AuthButtons.jsx
-// 로그인 / 백업 / 복원 / 로그아웃 버튼 (1줄 정렬 + 사용자 이름 통합)
 import { signInWithPopup, signOut } from "firebase/auth";
 import { doc, setDoc, getDocs, collection } from "firebase/firestore";
 
@@ -30,28 +29,39 @@ function AuthButtons({ user, setUser, auth, provider, db, words, setWords, t, la
   };
 
   const handleRestore = async () => {
-    const querySnapshot = await getDocs(collection(db, "users", user.uid, "words"));
-    const firestoreWords = {};
-    querySnapshot.forEach((doc) => {
-      firestoreWords[doc.id] = doc.data();
-    });
+    try {
+      const querySnapshot = await getDocs(collection(db, "users", user.uid, "words"));
+      const firestoreWords = {};
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data && data.lastReviewedAt) {
+          firestoreWords[doc.id] = data;
+        }
+      });
 
-    const localWords = JSON.parse(localStorage.getItem("wordData")) || {};
-    const merged = { ...firestoreWords };
+      const localWords = JSON.parse(localStorage.getItem("wordData") || "{}");
+      const merged = { ...firestoreWords };
 
-    for (const [word, localData] of Object.entries(localWords)) {
-      const remoteData = firestoreWords[word];
-      const localDate = new Date(localData.lastReviewedAt || "2000-01-01");
-      const remoteDate = new Date(remoteData?.lastReviewedAt || "2000-01-01");
+      for (const [word, localData] of Object.entries(localWords)) {
+        const remoteData = firestoreWords[word];
+        if (!localData || typeof localData !== "object") continue;
 
-      if (!remoteData || localDate > remoteDate) {
-        merged[word] = localData;
+        const localDate = new Date(localData.lastReviewedAt || "2000-01-01");
+        const remoteDate = new Date(remoteData?.lastReviewedAt || "2000-01-01");
+
+        if (!remoteData || localDate > remoteDate) {
+          merged[word] = localData;
+        }
       }
-    }
 
-    setWords(merged);
-    localStorage.setItem("wordData", JSON.stringify(merged));
-    alert("✅ 복원 완료 (신규/최근 단어는 병합되었습니다)");
+      setWords(merged);
+      localStorage.setItem("wordData", JSON.stringify(merged));
+      alert("✅ 복원 완료 (병합됨). 새로고침합니다.");
+      setTimeout(() => window.location.reload(), 800);
+    } catch (err) {
+      console.error("❌ 복원 중 오류:", err);
+      alert("⚠️ 복원 중 문제가 발생했습니다. 앱을 다시 시작해주세요.");
+    }
   };
 
   return (

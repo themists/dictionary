@@ -27,21 +27,69 @@ function App() {
 
   const pageSize = 30;
 
-  // 다크모드 적용
+  // 🌙 다크모드 반영
   useEffect(() => {
     document.body.classList.toggle("dark-mode", darkMode);
     localStorage.setItem("darkMode", darkMode);
   }, [darkMode]);
 
-  // 자동 복원 (마이그레이션 없음, 병합은 AuthButtons에서 수동 처리)
+  // 🧠 앱 시작 시 localStorage → 상태 초기화
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("wordData")) || {};
-    setWords(saved);
-    onAuthStateChanged(auth, (u) => setUser(u));
+    try {
+      const saved = JSON.parse(localStorage.getItem("wordData")) || {};
+      setWords(saved);
+    } catch (err) {
+      console.error("❌ localStorage 복원 실패:", err);
+      setWords({});
+    }
+  }, []);
+
+  // 🔄 로그인 시 Firestore와 localStorage 병합
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (u) => {
+      setUser(u);
+      if (!u) return;
+
+      try {
+        const querySnapshot = await getDocs(collection(db, "users", u.uid, "words"));
+        const firestoreWords = {};
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data?.lastReviewedAt) {
+            firestoreWords[doc.id] = data;
+          }
+        });
+
+        const localWords = JSON.parse(localStorage.getItem("wordData") || "{}");
+        const merged = { ...firestoreWords };
+
+        for (const [word, localData] of Object.entries(localWords)) {
+          const remoteData = firestoreWords[word];
+          if (!localData || typeof localData !== "object") continue;
+
+          const localDate = new Date(localData.lastReviewedAt || "2000-01-01");
+          const remoteDate = new Date(remoteData?.lastReviewedAt || "2000-01-01");
+
+          if (!remoteData || localDate > remoteDate) {
+            merged[word] = localData;
+          }
+        }
+
+        setWords(merged);
+        localStorage.setItem("wordData", JSON.stringify(merged));
+        console.log("🔁 자동 복원 병합 완료");
+      } catch (err) {
+        console.error("❌ 자동 복원 중 오류:", err);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const addWord = async (word) => {
-    const lower = word.toLowerCase();
+    const lower = word.toLowerCase().trim();
+    if (!lower) return;
+
     const today = getToday();
     const existing = words[lower];
     const updated = { ...words };
@@ -53,7 +101,7 @@ function App() {
         count: 0,
         lastReviewedAt: today,
         reviewedSources: [],
-        createdAt: "2024-05-20"
+        createdAt: today
       };
     }
 
@@ -67,7 +115,7 @@ function App() {
         await setDoc(doc(db, "users", user.uid, "words", lower), updated[lower]);
         console.log("📘 단어 저장 완료:", lower);
       } catch (err) {
-        console.error("❌ 단어 저장 실패:", err);
+        console.error("❌ 단어 Firestore 저장 실패:", err);
       }
     }
   };
@@ -78,7 +126,7 @@ function App() {
     if (!data) return;
 
     const isToday = data.lastReviewedAt === today;
-    const reviewed = data.reviewedSources || [];
+    const reviewed = Array.isArray(data.reviewedSources) ? data.reviewedSources : [];
     const alreadyByThisSource = isToday && reviewed.includes(sourceType);
     if (alreadyByThisSource) return;
 
