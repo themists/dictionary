@@ -204,7 +204,7 @@ function App() {
       <PaginationBlock totalPages={totalPages} page={page} setPage={setPage} t={t[lang]} />
 
       <div style={{ marginTop: "2rem", fontSize: "0.8rem", color: "#888", textAlign: "center" }}>
-        {t[lang].version("v1.0.0")}
+        {t[lang].version(`v${import.meta.env.VITE_APP_VERSION}`)}
       </div>
     </div>
   );
