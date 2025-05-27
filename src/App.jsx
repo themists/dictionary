@@ -35,8 +35,37 @@ function App() {
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("wordData")) || {};
     setWords(saved);
-    onAuthStateChanged(auth, (u) => setUser(u));
+
+    onAuthStateChanged(auth, async (u) => {
+      setUser(u);
+      if (u) {
+        try {
+          const docSnap = await getDoc(doc(db, "users", u.uid));
+          if (docSnap.exists()) {
+            const data = docSnap.data().wordData;
+            if (data && typeof data === "object") {
+              setWords(data);
+              localStorage.setItem("wordData", JSON.stringify(data));
+              console.log("🔄 자동 복원 완료");
+            }
+          }
+        } catch (err) {
+          console.error("🔥 자동 복원 오류:", err);
+        }
+      }
+    });
   }, []);
+
+  const autoBackup = async (updatedWords) => {
+    if (user) {
+      try {
+        await setDoc(doc(db, "users", user.uid), { wordData: updatedWords });
+        console.log("💾 자동 백업 완료");
+      } catch (err) {
+        console.error("💥 자동 백업 실패:", err);
+      }
+    }
+  };
 
   const addWord = (word) => {
     const lower = word.toLowerCase();
@@ -79,6 +108,7 @@ function App() {
     };
     setWords(updated);
     localStorage.setItem("wordData", JSON.stringify(updated));
+    autoBackup(updated);
   };
 
   const deleteWord = (word) => {
@@ -86,6 +116,7 @@ function App() {
     delete updated[word];
     setWords(updated);
     localStorage.setItem("wordData", JSON.stringify(updated));
+    autoBackup(updated);
   };
 
   const sortedEntries = Object.entries(words)
