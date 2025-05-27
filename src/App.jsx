@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 import { db, auth, provider } from "./utils/firebase";
-import { getDoc, setDoc, doc } from "firebase/firestore";
+import { getDoc, setDoc, doc, collection, getDocs, deleteDoc } from "firebase/firestore"; // Added collection, getDocs, deleteDoc
 import { onAuthStateChanged } from "firebase/auth";
 
 import HeaderBar from "./components/HeaderBar";
@@ -49,12 +49,14 @@ function App() {
               await setDoc(wordRef, data);
             }
             console.log("📦 마이그레이션 완료");
+            // 마이그레이션 후 기존 wordData 필드 삭제 (선택 사항이지만 권장)
+            // await updateDoc(doc(db, "users", u.uid), { wordData: deleteField() });
           }
 
           const querySnapshot = await getDocs(collection(db, "users", u.uid, "words"));
           const wordMap = {};
-          querySnapshot.forEach((doc) => {
-            wordMap[doc.id] = doc.data();
+          querySnapshot.forEach((d) => { // Changed doc to d to avoid conflict with imported doc
+            wordMap[d.id] = d.data();
           });
           setWords(wordMap);
           localStorage.setItem("wordData", JSON.stringify(wordMap));
@@ -62,27 +64,25 @@ function App() {
         } catch (err) {
           console.error("🔥 자동 복원 오류:", err);
         }
+      } else {
+        // Clear words and local storage if user logs out
+        setWords({});
+        localStorage.removeItem("wordData");
       }
     });
-            }
-          }
-        } catch (err) {
-          console.error("🔥 자동 복원 오류:", err);
-        }
-      }
-    });
-  }, []);
+  }, []); // Empty dependency array means this runs once on mount
 
-  const autoBackup = async (updatedWords) => {
-    if (user) {
-      try {
-        await setDoc(doc(db, "users", user.uid), { wordData: updatedWords });
-        console.log("💾 자동 백업 완료");
-      } catch (err) {
-        console.error("💥 자동 백업 실패:", err);
-      }
-    }
-  };
+  // autoBackup function is now redundant as we are saving/updating words individually
+  // const autoBackup = async (updatedWords) => {
+  //   if (user) {
+  //     try {
+  //       await setDoc(doc(db, "users", user.uid), { wordData: updatedWords });
+  //       console.log("💾 자동 백업 완료");
+  //     } catch (err) {
+  //       console.error("💥 자동 백업 실패:", err);
+  //     }
+  //   }
+  // };
 
   const addWord = async (word) => {
     const lower = word.toLowerCase();
@@ -117,9 +117,9 @@ function App() {
 
     const isToday = data.lastReviewedAt === today;
     const reviewed = data.reviewedSources || [];
-    const alreadyReviewedToday = isToday && reviewed.length > 0;
+    // const alreadyReviewedToday = isToday && reviewed.length > 0; // This logic might be flawed if you want to increment count only once per day
     const alreadyByThisSource = isToday && reviewed.includes(sourceType);
-    if (alreadyByThisSource) return;
+    if (alreadyByThisSource) return; // Prevent double review from the same source on the same day
 
     const updatedSources = isToday
       ? [...new Set([...reviewed, sourceType])]
@@ -127,7 +127,8 @@ function App() {
 
     const updatedWord = {
       ...data,
-      count: alreadyReviewedToday ? data.count : data.count + 1,
+      // Increment count only if it's the first review of the day or first review from this source today
+      count: isToday && reviewed.length > 0 && !alreadyByThisSource ? data.count : data.count + 1,
       lastReviewedAt: today,
       reviewedSources: updatedSources
     };
@@ -176,10 +177,15 @@ function App() {
         case "countDesc":
           return bData.count - aData.count || a.localeCompare(b);
         case "dateAsc":
-          return new Date(aData.lastReviewedAt) - new Date(bData.lastReviewedAt) || a.localeCompare(b);
+          // Ensure dates are parsed correctly or handle potential invalid dates
+          const dateA_asc = new Date(aData.lastReviewedAt);
+          const dateB_asc = new Date(bData.lastReviewedAt);
+          return (isNaN(dateA_asc) ? 0 : dateA_asc.getTime()) - (isNaN(dateB_asc) ? 0 : dateB_asc.getTime()) || a.localeCompare(b);
         case "dateDesc":
-          return new Date(bData.lastReviewedAt) - new Date(aData.lastReviewedAt) || a.localeCompare(b);
-        default:
+          const dateA_desc = new Date(aData.lastReviewedAt);
+          const dateB_desc = new Date(bData.lastReviewedAt);
+          return (isNaN(dateB_desc) ? 0 : dateB_desc.getTime()) - (isNaN(dateA_desc) ? 0 : dateA_desc.getTime()) || a.localeCompare(b);
+        default: // countAsc
           return aData.count - bData.count || a.localeCompare(b);
       }
     });
