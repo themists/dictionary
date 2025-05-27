@@ -33,20 +33,37 @@ function App() {
   }, [darkMode]);
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("wordData")) || {};
-    setWords(saved);
-
     onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
         try {
-          const docSnap = await getDoc(doc(db, "users", u.uid));
-          if (docSnap.exists()) {
-            const data = docSnap.data().wordData;
-            if (data && typeof data === "object") {
-              setWords(data);
-              localStorage.setItem("wordData", JSON.stringify(data));
-              console.log("🔄 자동 복원 완료");
+          // 🔁 기존 데이터가 남아 있다면 한 번만 마이그레이션
+          const oldDocSnap = await getDoc(doc(db, "users", u.uid));
+          if (oldDocSnap.exists() && oldDocSnap.data().wordData) {
+            const oldData = oldDocSnap.data().wordData;
+            for (const [word, data] of Object.entries(oldData)) {
+              const wordRef = doc(db, "users", u.uid, "words", word);
+              if (!data.createdAt) {
+                data.createdAt = "2024-05-20";
+              }
+              await setDoc(wordRef, data);
+            }
+            console.log("📦 마이그레이션 완료");
+          }
+
+          const querySnapshot = await getDocs(collection(db, "users", u.uid, "words"));
+          const wordMap = {};
+          querySnapshot.forEach((doc) => {
+            wordMap[doc.id] = doc.data();
+          });
+          setWords(wordMap);
+          localStorage.setItem("wordData", JSON.stringify(wordMap));
+          console.log("🔄 자동 복원 완료");
+        } catch (err) {
+          console.error("🔥 자동 복원 오류:", err);
+        }
+      }
+    });
             }
           }
         } catch (err) {
@@ -67,7 +84,7 @@ function App() {
     }
   };
 
-  const addWord = (word) => {
+  const addWord = async (word) => {
     const lower = word.toLowerCase();
     const today = getToday();
     const existing = words[lower];
@@ -75,15 +92,25 @@ function App() {
     if (existing) {
       updated[lower] = { ...existing, lastReviewedAt: today };
     } else {
-      updated[lower] = { count: 0, lastReviewedAt: today, reviewedSources: [] };
+      updated[lower] = { count: 0, lastReviewedAt: today, reviewedSources: [], createdAt: '2024-05-20' };
     }
     setWords(updated);
     setHighlightedWord(lower);
     setPage(1);
     localStorage.setItem("wordData", JSON.stringify(updated));
+
+    // 🔁 Firestore에 단어별로 저장
+    if (user) {
+      try {
+        await setDoc(doc(db, "users", user.uid, "words", lower), updated[lower]);
+        console.log("📘 단어 저장 완료:", lower);
+      } catch (err) {
+        console.error("❌ 단어 저장 실패:", err);
+      }
+    }
   };
 
-  const handleReview = (word, sourceType) => {
+  const handleReview = async (word, sourceType) => {
     const today = getToday();
     const data = words[word];
     if (!data) return;
@@ -98,25 +125,44 @@ function App() {
       ? [...new Set([...reviewed, sourceType])]
       : [sourceType];
 
+    const updatedWord = {
+      ...data,
+      count: alreadyReviewedToday ? data.count : data.count + 1,
+      lastReviewedAt: today,
+      reviewedSources: updatedSources
+    };
+
     const updated = {
       ...words,
-      [word]: {
-        count: alreadyReviewedToday ? data.count : data.count + 1,
-        lastReviewedAt: today,
-        reviewedSources: updatedSources
-      }
+      [word]: updatedWord
     };
     setWords(updated);
     localStorage.setItem("wordData", JSON.stringify(updated));
-    autoBackup(updated);
+
+    if (user) {
+      try {
+        await setDoc(doc(db, "users", user.uid, "words", word), updatedWord);
+        console.log("📘 복습 저장 완료:", word);
+      } catch (err) {
+        console.error("❌ 복습 저장 실패:", err);
+      }
+    }
   };
 
-  const deleteWord = (word) => {
+  const deleteWord = async (word) => {
     const updated = { ...words };
     delete updated[word];
     setWords(updated);
     localStorage.setItem("wordData", JSON.stringify(updated));
-    autoBackup(updated);
+
+    if (user) {
+      try {
+        await deleteDoc(doc(db, "users", user.uid, "words", word));
+        console.log("🗑️ 단어 삭제 완료:", word);
+      } catch (err) {
+        console.error("❌ 단어 삭제 실패:", err);
+      }
+    }
   };
 
   const sortedEntries = Object.entries(words)
