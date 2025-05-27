@@ -40,6 +40,7 @@ function AuthButtons({ user, setUser, auth, provider, db, words, setWords, t, la
           <button onClick={handleBackup}>💾 {t[lang].backup}</button>
           <button onClick={handleRestore}>♻️ {t[lang].restore}</button>
           <button onClick={handleLogout}>🔓 </button>
+          <button onClick={() => window.location.reload()}>🔄</button>
         </div>
       )}
     </div>
