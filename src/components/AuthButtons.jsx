@@ -25,18 +25,21 @@ function AuthButtons({ user, setUser, auth, provider, t, lang }) {
         <div
           style={{
             display: "flex",
-            flexWrap: "wrap",
-            gap: "0.5rem",
-            alignItems: "center",
             justifyContent: "space-between",
-            width: "100%"
+            alignItems: "center",
+            maxWidth: "600px",
+            margin: "0 auto",
+            width: "100%",
+            flexWrap: "nowrap"
           }}
         >
           <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
             <button onClick={handleLogout}>🔓</button>
             <span style={{ fontSize: "0.9rem", color: "#666" }}>{user.displayName || user.email}</span>
           </div>
-          <button onClick={() => window.location.reload()} style={{ marginLeft: "auto" }}>🔄</button>
+          <div>
+            <button onClick={() => window.location.reload()}>🔄</button>
+          </div>
         </div>
       )}
     </div>
