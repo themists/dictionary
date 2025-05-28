@@ -7,8 +7,11 @@ export const getSnapshotKey = (userId) => `wordSnapshot_${userId}`;
 
 /**
  * ✅ 변경된 단어만 Firestore에 저장하고 localStorage에 스냅샷 저장
+ * @param {string} userId
+ * @param {object} words
+ * @param {object} options - { silent: true }일 경우 알림 없음
  */
-export async function optimizedBackup(userId, words) {
+export async function optimizedBackup(userId, words, { silent = true } = {}) {
   if (!userId || !words) return;
 
   const snapshotKey = getSnapshotKey(userId);
@@ -16,7 +19,7 @@ export async function optimizedBackup(userId, words) {
   const prevSnapshot = localStorage.getItem(snapshotKey);
 
   if (prevSnapshot === newSnapshot) {
-    alert("✅ 변경된 항목이 없어 저장할 필요가 없습니다.");
+    if (!silent) alert("✅ 변경된 항목이 없어 저장할 필요가 없습니다.");
     return;
   }
 
@@ -32,7 +35,7 @@ export async function optimizedBackup(userId, words) {
   try {
     await Promise.all(batchSaves);
     localStorage.setItem(snapshotKey, newSnapshot);
-    alert(`✅ 백업 완료: ${changedEntries.length}개 항목 저장됨`);
+    if (!silent) alert(`✅ 백업 완료: ${changedEntries.length}개 항목 저장됨`);
   } catch (error) {
     console.error("❌ 백업 실패:", error);
     alert("❌ 백업 중 오류가 발생했습니다.");

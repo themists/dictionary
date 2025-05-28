@@ -21,7 +21,7 @@ function AuthButtons({ user, setUser, auth, provider, db, words, setWords, t, la
 
   const handleBackup = () => {
     if (user) {
-      optimizedBackup(user.uid, words);
+      optimizedBackup(user.uid, words, { silent: false }); // 🔔 사용자 요청 → 메시지 표시
     }
   };
 
