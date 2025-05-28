@@ -204,6 +204,7 @@ function App() {
         toggleLang={toggleLang}
         lang={lang}
         darkMode={darkMode}
+        onToggleSettings={() => setShowSettings((prev) => !prev)}
       />
 
       <div className="top-group fixed-width-section">

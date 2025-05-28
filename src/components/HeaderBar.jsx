@@ -1,38 +1,16 @@
 // src/components/HeaderBar.jsx
-import React, { useState } from "react";
-import SettingsPanel from "./SettingsPanel";
+import React from "react";
 
 function HeaderBar({
   wordCount,
-  onBackup,
-  onRestore,
-  onExport,
-  onImport,
-  toggleDarkMode,
-  toggleLang,
-  lang,
-  darkMode
+  onToggleSettings // ✅ 새 props로 토글
 }) {
-  const [showSettings, setShowSettings] = useState(false);
-
   return (
     <div className="header-title-line">
       <h1>EchoWord ({wordCount} words)</h1>
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-        <button onClick={() => setShowSettings(!showSettings)}>⚙️</button>
+        <button onClick={onToggleSettings}>⚙️</button>
       </div>
-      {showSettings && (
-        <SettingsPanel
-          onBackup={onBackup}
-          onRestore={onRestore}
-          onExport={onExport}
-          onImport={onImport}
-          toggleDarkMode={toggleDarkMode}
-          toggleLang={toggleLang}
-          lang={lang}
-          darkMode={darkMode}
-        />
-      )}
     </div>
   );
 }
