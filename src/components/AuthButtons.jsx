@@ -1,8 +1,12 @@
 // src/components/AuthButtons.jsx
 import { signInWithPopup, signOut } from "firebase/auth";
-import { doc, setDoc, getDocs, collection } from "firebase/firestore";
+import { optimizedBackup } from "../utils/optimizedBackup";
+import { firestoreRestore } from "../utils/firestoreRestore";
+import { restoreFromFirestoreWithMerge } from "../utils/restoreFromFirestoreWithMerge";
 
 function AuthButtons({ user, setUser, auth, provider, db, words, setWords, t, lang }) {
+  const [isRestoring, setIsRestoring] = useState(false);
+
   const handleLogin = async () => {
     const result = await signInWithPopup(auth, provider);
     setUser(result.user);
@@ -14,53 +18,39 @@ function AuthButtons({ user, setUser, auth, provider, db, words, setWords, t, la
     setUser(null);
   };
 
-  const handleBackup = async () => {
-    if (!user) return;
-    try {
-      const entries = Object.entries(words);
-      for (const [word, data] of entries) {
-        await setDoc(doc(db, "users", user.uid, "words", word), data);
-      }
-      alert(t[lang].backupSuccess);
-    } catch (err) {
-      console.error("❌ 백업 중 오류:", err);
-      alert("⚠️ 백업 중 오류가 발생했습니다.");
+  const handleBackup = () => {
+    if (user) {
+      optimizedBackup(user.uid, words);
     }
   };
 
   const handleRestore = async () => {
+    if (!user || isRestoring) return;
+    setIsRestoring(true);
+
     try {
-      const querySnapshot = await getDocs(collection(db, "users", user.uid, "words"));
-      const firestoreWords = {};
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        if (data && data.lastReviewedAt) {
-          firestoreWords[doc.id] = data;
-        }
-      });
-
-      const localWords = JSON.parse(localStorage.getItem("wordData") || "{}");
-      const merged = { ...firestoreWords };
-
-      for (const [word, localData] of Object.entries(localWords)) {
-        const remoteData = firestoreWords[word];
-        if (!localData || typeof localData !== "object") continue;
-
-        const localDate = new Date(localData.lastReviewedAt || "2000-01-01");
-        const remoteDate = new Date(remoteData?.lastReviewedAt || "2000-01-01");
-
-        if (!remoteData || localDate > remoteDate) {
-          merged[word] = localData;
-        }
+      const restored = await restoreFromFirestoreWithMerge(user.uid, db);
+      if (restored) {
+        setWords(restored);
+        alert("✅ 복원 완료. 곧 새로고침됩니다.");
+        setTimeout(() => window.location.reload(), 800);
       }
-
-      setWords(merged);
-      localStorage.setItem("wordData", JSON.stringify(merged));
-      alert("✅ 복원 완료 (병합됨). 새로고침합니다.");
-      setTimeout(() => window.location.reload(), 800);
     } catch (err) {
-      console.error("❌ 복원 중 오류:", err);
-      alert("⚠️ 복원 중 문제가 발생했습니다. 앱을 다시 시작해주세요.");
+      console.error("❌ 복원 실패:", err);
+      alert("⚠️ 복원 중 문제가 발생했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
+  // 📦 클라우드 덮어쓰기 복원 – 추후 설정 메뉴 등에서 UI 적용 예정
+  const handleCloudRestore = async () => {
+    if (!user) return;
+    const restored = await firestoreRestore(user.uid);
+    if (restored) {
+      setWords(restored);
+      alert("📦 클라우드에서 복원 완료. 새로고침합니다.");
+      setTimeout(() => window.location.reload(), 800);
     }
   };
 
@@ -72,7 +62,8 @@ function AuthButtons({ user, setUser, auth, provider, db, words, setWords, t, la
       {user && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
           <button onClick={handleBackup}>💾 {t[lang].backup}</button>
-          <button onClick={handleRestore}>♻️ {t[lang].restore}</button>
+          <button onClick={handleRestore} disabled={isRestoring}>♻️ {t[lang].restore}</button>
+          {/* <button onClick={handleCloudRestore}>📦 클라우드 완전 복원</button> */}
           <button onClick={handleLogout}>🔓 </button>
           <button onClick={() => window.location.reload()}>🔄</button>
         </div>

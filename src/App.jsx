@@ -14,6 +14,7 @@ import t from "./utils/i18n";
 
 import useSyncWithFirebase from "./hooks/useSyncWithFirebase";
 import useWordActions from "./hooks/useWordActions";
+import { optimizedBackup } from "./utils/optimizedBackup";
 
 function App() {
   const [words, setWords] = useState({});
@@ -24,30 +25,55 @@ function App() {
   const [lang, setLang] = useState(() => localStorage.getItem("lang") || "ko");
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
   const [highlightedWord, setHighlightedWord] = useState(null);
+  const [saveStatus, setSaveStatus] = useState("");
 
   const pageSize = 30;
 
-  // 🌙 다크모드 반영
+  // 하버 테마 적용
   useEffect(() => {
     document.body.classList.toggle("dark-mode", darkMode);
     localStorage.setItem("darkMode", darkMode);
   }, [darkMode]);
 
-  // 🧠 앱 시작 시 localStorage → 상태 초기화
+  // localStorage 복원
   useEffect(() => {
+    if (!user) return;
+
+    const snapshotKey = `wordSnapshot_${user.uid}`;
+    if (localStorage.getItem("wordData") && !localStorage.getItem(snapshotKey)) {
+      localStorage.setItem(snapshotKey, localStorage.getItem("wordData"));
+    }
+
     try {
-      const saved = JSON.parse(localStorage.getItem("wordData")) || {};
+      const saved = JSON.parse(localStorage.getItem(snapshotKey)) || {};
       setWords(saved);
     } catch (err) {
       console.error("❌ localStorage 복원 실패:", err);
       setWords({});
     }
-  }, []);
+  }, [user]);
 
-  // 🔄 Firebase와 로그인 감지 및 동기화
+  // Firebase 로그인 감지 및 동기화
   useSyncWithFirebase({ auth, db, setUser, setWords });
 
   const { addWord, handleReview, deleteWord } = useWordActions({ words, setWords, user, db });
+
+  // 자동 저장 상태 표시
+  useEffect(() => {
+    if (!user || !words) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        await optimizedBackup(user.uid, words);
+        setSaveStatus("✅ 저장되음");
+      } catch (err) {
+        console.error("❌ 저장 실패:", err);
+        setSaveStatus("⚠️ 저장 실패");
+      }
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [user, words]);
 
   const sortedEntries = Object.entries(words)
     .filter(([w]) => w !== highlightedWord)
@@ -122,6 +148,10 @@ function App() {
       />
 
       <PaginationBlock totalPages={totalPages} page={page} setPage={setPage} t={t[lang]} />
+
+      {saveStatus && (
+        <div style={{ textAlign: "center", color: "#888", marginTop: "0.5rem" }}>{saveStatus}</div>
+      )}
 
       <div style={{ marginTop: "2rem", fontSize: "0.8rem", color: "#888", textAlign: "center" }}>
         {t[lang].version(`v${import.meta.env.VITE_APP_VERSION}`)}
