@@ -1,3 +1,4 @@
+// src/App.jsx
 import { useEffect, useState, useRef } from "react";
 import "./App.css";
 
@@ -103,7 +104,6 @@ function App() {
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [user, inputWord]);
 
-  // ✅ 설정 패널용 기능
   const toggleDarkMode = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
@@ -186,7 +186,7 @@ function App() {
         darkMode={darkMode}
       />
 
-      <div className="top-group">
+      <div className="top-group fixed-width-section">
         <div className="row">
           <AuthButtons
             user={user}
@@ -204,25 +204,29 @@ function App() {
         <SortControls sortMode={sortMode} setSortMode={setSortMode} lang={lang} t={t} />
       </div>
 
-      <PaginationBlock totalPages={totalPages} page={page} setPage={setPage} t={t[lang]} />
+      <PaginationBlock totalPages={totalPages} page={page} setPage={setPage} t={t[lang]} className="fixed-width-section" />
 
-      <WordInput
-        inputWord={inputWord}
-        setInputWord={setInputWord}
-        onAddWord={(word) => addWord(word, setHighlightedWord, setPage)}
-        placeholder={t[lang].inputPlaceholder}
-      />
+      <div className="fixed-width-section">
+        <WordInput
+          inputWord={inputWord}
+          setInputWord={setInputWord}
+          onAddWord={(word) => addWord(word, setHighlightedWord, setPage)}
+          placeholder={t[lang].inputPlaceholder}
+        />
+      </div>
 
-      <WordList
-        words={paginated}
-        lang={lang}
-        t={t}
-        getDaysSince={getDaysSince}
-        onReview={handleReview}
-        onDelete={deleteWord}
-      />
+      <div className="fixed-width-section">
+        <WordList
+          words={paginated}
+          lang={lang}
+          t={t}
+          getDaysSince={getDaysSince}
+          onReview={handleReview}
+          onDelete={deleteWord}
+        />
+      </div>
 
-      <PaginationBlock totalPages={totalPages} page={page} setPage={setPage} t={t[lang]} />
+      <PaginationBlock totalPages={totalPages} page={page} setPage={setPage} t={t[lang]} className="fixed-width-section" />
 
       {saveStatus && (
         <div style={{ textAlign: "center", color: "#888", marginTop: "0.5rem" }}>{saveStatus}</div>
