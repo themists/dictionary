@@ -488,3 +488,9 @@ button:disabled {
 .refresh-button button {
   padding: 0.4rem 0.6rem;
 }
+
+.settings-panel button,
+.settings-panel .import-label {
+  min-width: 140px; /* ❗ Import 버튼과 비슷한 폭 */
+  text-align: center;
+}
