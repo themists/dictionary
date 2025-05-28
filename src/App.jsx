@@ -117,18 +117,7 @@ function App() {
 
   return (
     <div className="container" style={{ padding: "1rem", fontFamily: "Arial" }}>
-      {isRestoring && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "4px",
-          backgroundColor: "#3366ff",
-          zIndex: 1000,
-          animation: "pulse 1.2s ease-in-out infinite"
-        }} />
-      )}
+      {isRestoring && <div className="progress-bar" />}
 
       <HeaderBar
         wordCount={Object.keys(words).length}
