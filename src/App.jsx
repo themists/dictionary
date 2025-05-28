@@ -39,12 +39,18 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
 
   const settingsRef = useRef(null);
+  const settingsButtonRef = useRef(null); // ✅ 세팅 버튼 추적
   const pageSize = 30;
   const skipNextSaveRef = useRef(false);
 
   useEffect(() => {
     function handleClickOutside(event) {
-      if (settingsRef.current && !settingsRef.current.contains(event.target)) {
+      if (
+        settingsRef.current &&
+        !settingsRef.current.contains(event.target) &&
+        settingsButtonRef.current &&
+        !settingsButtonRef.current.contains(event.target)
+      ) {
         setShowSettings(false);
       }
     }
@@ -136,7 +142,6 @@ function App() {
     localStorage.setItem("lang", newLang);
   };
 
-  // ✅ confirm 제거된 백업/복원 핸들러
   const handleBackup = async () => {
     if (!user) return;
     await saveDataToFirestore(user.uid, words);
@@ -199,6 +204,7 @@ function App() {
         lang={lang}
         darkMode={darkMode}
         onToggleSettings={() => setShowSettings((prev) => !prev)}
+        settingsButtonRef={settingsButtonRef} // ✅ 버튼 ref 전달
       />
 
       <div className="top-group fixed-width-section">
