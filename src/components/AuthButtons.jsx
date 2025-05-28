@@ -33,7 +33,7 @@ function AuthButtons({ user, setUser, auth, provider, t, lang }) {
             flexWrap: "nowrap"
           }}
         >
-// 이 div가 두 개의 자식 div를 감싸는 부모 역할을 합니다.
+          
 <div style={{
   display: "flex",             // 자식 div들을 flex 아이템으로 만듭니다.
   justifyContent: "space-between", // 첫 번째 자식은 왼쪽, 두 번째 자식은 오른쪽에 배치합니다.
