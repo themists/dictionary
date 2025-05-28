@@ -40,9 +40,6 @@ function AuthButtons({ user, setUser, auth, provider, t, lang }) {
               {user.displayName || user.email}, Welcome back!
             </span>
           </div>
-          <div>
-            <button onClick={() => window.location.reload()}>🔄</button>
-          </div>
           </div>
         </div>
       )}

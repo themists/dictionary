@@ -394,3 +394,13 @@ button:disabled {
   margin: 0 auto;
   box-sizing: border-box;
 }
+
+/* 제목 줄: EchoWord + 🔄 + ⚙️ 정렬 고정용 */
+.header-title-line {
+  max-width: 600px;
+  margin: 0 auto 1rem;
+  padding: 0 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
