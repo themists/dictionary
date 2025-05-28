@@ -36,13 +36,12 @@ function App() {
   const [highlightedWord, setHighlightedWord] = useState(null);
   const [saveStatus, setSaveStatus] = useState("");
   const [isRestoring, setIsRestoring] = useState(false);
-  const [showSettings, setShowSettings] = useState(false); // ✅ 설정 창 상태 추가
+  const [showSettings, setShowSettings] = useState(false);
 
-  const settingsRef = useRef(null); // ✅ 바깥 클릭 감지용
+  const settingsRef = useRef(null);
   const pageSize = 30;
   const skipNextSaveRef = useRef(false);
 
-  // ✅ 바깥 클릭 시 설정 닫기
   useEffect(() => {
     function handleClickOutside(event) {
       if (settingsRef.current && !settingsRef.current.contains(event.target)) {
@@ -137,23 +136,20 @@ function App() {
     localStorage.setItem("lang", newLang);
   };
 
+  // ✅ confirm 제거된 백업/복원 핸들러
   const handleBackup = async () => {
     if (!user) return;
-    if (confirm("💾 현재 데이터를 클라우드에 백업하시겠습니까?")) {
-      await saveDataToFirestore(user.uid, words);
-      alert("✅ 백업이 완료되었습니다.");
-    }
+    await saveDataToFirestore(user.uid, words);
+    alert("✅ 백업이 완료되었습니다.");
   };
 
   const handleRestore = async () => {
     if (!user) return;
-    if (confirm("⚠️ 클라우드 데이터를 현재 데이터에 덮어쓰시겠습니까?\n이 작업은 취소할 수 없습니다.")) {
-      const restored = await restoreDataFromFirestore(user.uid);
-      if (restored) {
-        setWords(restored);
-        alert("✅ 복원이 완료되었습니다. 새로고침합니다.");
-        setTimeout(() => window.location.reload(), 800);
-      }
+    const restored = await restoreDataFromFirestore(user.uid);
+    if (restored) {
+      setWords(restored);
+      alert("✅ 복원이 완료되었습니다. 새로고침합니다.");
+      setTimeout(() => window.location.reload(), 800);
     }
   };
 
@@ -163,11 +159,9 @@ function App() {
 
   const handleImport = async (file) => {
     if (!file) return;
-    if (confirm("📥 선택한 파일의 단어를 기존 데이터와 병합하시겠습니까?")) {
-      const imported = await importWordsFromFile(file);
-      if (imported) setWords((prev) => ({ ...prev, ...imported }));
-      alert("✅ 병합 완료");
-    }
+    const imported = await importWordsFromFile(file);
+    if (imported) setWords((prev) => ({ ...prev, ...imported }));
+    alert("✅ 병합 완료");
   };
 
   const sortedEntries = Object.entries(words)
