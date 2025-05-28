@@ -30,12 +30,9 @@ function AuthButtons({ user, setUser, auth, provider, db, words, setWords, t, la
     setIsRestoring(true);
 
     try {
-      const restored = await restoreFromFirestoreWithMerge(user.uid, db);
-      if (restored) {
-        setWords(restored);
-        alert("✅ 복원 완료. 곧 새로고침됩니다.");
-        setTimeout(() => window.location.reload(), 800);
-      }
+      await restoreFromFirestoreWithMerge(user.uid, db, setWords); // ✅ 최신 형식 반영
+      alert("✅ 복원 완료. 곧 새로고침됩니다.");
+      setTimeout(() => window.location.reload(), 800);
     } catch (err) {
       console.error("❌ 복원 실패:", err);
       alert("⚠️ 복원 중 문제가 발생했습니다. 다시 시도해주세요.");
