@@ -50,6 +50,14 @@ export default function useWordActions({ words, setWords, user, db, skipNextSave
       reviewedSources: updatedSources
     };
 
+    // ✅ 저장 의미가 있는 변경인지 판단
+    const isSignificantUpdate =
+      updatedWord.count !== data.count || updatedWord.lastReviewedAt !== data.lastReviewedAt;
+
+    if (!isSignificantUpdate) {
+      return; // ✅ 성과 변화 없으면 저장 생략
+    }
+
     const updated = {
       ...words,
       [word]: updatedWord
