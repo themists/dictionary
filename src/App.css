@@ -340,3 +340,51 @@ button:disabled {
   opacity: 0.9;
   transform: scale(1.1);
 }
+
+/* Settings Panel - ⚙️ 메뉴 */
+.settings-panel {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 1rem;
+  position: absolute;
+  top: 60px;
+  right: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border-radius: 8px;
+  z-index: 1000;
+}
+
+.settings-panel button,
+.settings-panel .import-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  background-color: #e0e0e0;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  text-align: center;
+  border: none;
+}
+
+.settings-panel .import-label:hover,
+.settings-panel button:hover {
+  background-color: #d5d5d5;
+}
+
+.dark-mode .settings-panel {
+  background-color: #1e1e1e;
+  color: #eee;
+  border-color: #555;
+}
+
+.dark-mode .settings-panel .import-label,
+.dark-mode .settings-panel button {
+  background-color: #2a2a2a;
+  color: #ddd;
+}
+
+.dark-mode .settings-panel .import-label:hover,
+.dark-mode .settings-panel button:hover {
+  background-color: #3a3a3a;
+}

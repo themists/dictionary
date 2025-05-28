@@ -18,6 +18,13 @@ import useWordActions from "./hooks/useWordActions";
 import { optimizedBackup } from "./utils/optimizedBackup";
 import { restoreFromFirestoreWithMerge } from "./utils/firestoreUtils";
 
+import {
+  saveDataToFirestore,
+  restoreDataFromFirestore,
+  exportWordsToFile,
+  importWordsFromFile
+} from "./utils/backupUtils";
+
 function App() {
   const [words, setWords] = useState({});
   const [inputWord, setInputWord] = useState("");
@@ -28,7 +35,7 @@ function App() {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
   const [highlightedWord, setHighlightedWord] = useState(null);
   const [saveStatus, setSaveStatus] = useState("");
-  const [isRestoring, setIsRestoring] = useState(false); // ✅ 복원 중 상태
+  const [isRestoring, setIsRestoring] = useState(false);
 
   const pageSize = 30;
   const skipNextSaveRef = useRef(false);
@@ -81,20 +88,54 @@ function App() {
     const handleVisibilityChange = async () => {
       if (document.visibilityState === "visible" && user && inputWord.length === 0) {
         try {
-          setIsRestoring(true); // ✅ 시작
+          setIsRestoring(true);
           await restoreFromFirestoreWithMerge(user.uid, db, setWords);
           skipNextSaveRef.current = true;
           console.log("🔁 복원 완료, 자동 저장 1회 생략");
         } catch (error) {
           console.error("❌ 복원 실패:", error);
         } finally {
-          setTimeout(() => setIsRestoring(false), 500); // ✅ 부드럽게 사라짐
+          setTimeout(() => setIsRestoring(false), 500);
         }
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [user, inputWord]);
+
+  // ✅ 설정 패널용 기능
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    localStorage.setItem("darkMode", newMode);
+    document.body.classList.toggle("dark-mode", newMode);
+  };
+
+  const toggleLang = () => {
+    const newLang = lang === "en" ? "ko" : "en";
+    setLang(newLang);
+    localStorage.setItem("lang", newLang);
+  };
+
+  const handleBackup = async () => {
+    if (user) await saveDataToFirestore(user.uid, words);
+  };
+
+  const handleRestore = async () => {
+    if (user) {
+      const restored = await restoreDataFromFirestore(user.uid);
+      if (restored) setWords(restored);
+    }
+  };
+
+  const handleExport = () => {
+    exportWordsToFile(words);
+  };
+
+  const handleImport = async (file) => {
+    const imported = await importWordsFromFile(file);
+    if (imported) setWords((prev) => ({ ...prev, ...imported }));
+  };
 
   const sortedEntries = Object.entries(words)
     .filter(([w]) => w !== highlightedWord)
@@ -122,10 +163,14 @@ function App() {
 
       <HeaderBar
         wordCount={Object.keys(words).length}
-        darkMode={darkMode}
-        setDarkMode={setDarkMode}
+        onBackup={handleBackup}
+        onRestore={handleRestore}
+        onExport={handleExport}
+        onImport={handleImport}
+        toggleDarkMode={toggleDarkMode}
+        toggleLang={toggleLang}
         lang={lang}
-        setLang={setLang}
+        darkMode={darkMode}
       />
 
       <div className="top-group">
@@ -173,8 +218,8 @@ function App() {
       <div style={{ marginTop: "2rem", fontSize: "0.8rem", color: "#888", textAlign: "center" }}>
         {t[lang].version(`v${import.meta.env.VITE_APP_VERSION}`)}
       </div>
-      
-      <ScrollButtons /> {/* ✅ 스크롤 버튼 추가 */}
+
+      <ScrollButtons />
     </div>
   );
 }
