@@ -1,5 +1,5 @@
 // src/hooks/useAppLifecycle.js
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { optimizedBackup } from "../utils/optimizedBackup";
 import { restoreFromFirestoreWithMerge } from "../utils/firestoreUtils";
 import { debounce } from "../utils/debounce";
@@ -14,6 +14,8 @@ export default function useAppLifecycle({
   setIsRestoring,
   skipNextSaveRef,
 }) {
+  const [backupError, setBackupError] = useState(false); // ✅ 저장 중단 상태 추가
+
   // 다크모드 반영 및 저장
   useEffect(() => {
     document.body.classList.toggle("dark-mode", darkMode);
@@ -36,15 +38,33 @@ export default function useAppLifecycle({
     }
   }, [user]);
 
-  // ✅ 자동 저장 (debounce 적용)
+  // ✅ 자동 저장 (debounce 적용 + quota 초과 시 중단)
   const debouncedBackup = useRef(
     debounce(async () => {
+      if (backupError) return; // ❌ 자동 저장 중단 시 저장 생략
+
       try {
         await optimizedBackup(user.uid, words);
         setSaveStatus("");
       } catch (err) {
         console.error("❌ 저장 실패:", err);
-        setSaveStatus("⚠️ 저장 실패");
+
+        const message = err?.message || "";
+        const code = err?.code || "";
+
+        // ✅ quota 초과 감지 시 자동 저장 일시 중단
+        if (message.includes("quota") || code === "resource-exhausted") {
+          console.warn("⚠️ Firestore quota exceeded. 자동 저장 30분 중단");
+          setBackupError(true);
+          setSaveStatus("⏸️ 저장 중단됨: Firebase 일 사용량 초과");
+
+          setTimeout(() => {
+            setBackupError(false);
+            setSaveStatus(""); // 상태 복구
+          }, 30 * 60 * 1000); // 30분 후 재시도 허용
+        } else {
+          setSaveStatus("⚠️ 저장 실패");
+        }
       }
     }, 5000)
   ).current;

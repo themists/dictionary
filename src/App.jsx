@@ -32,6 +32,7 @@ function App() {
   const [highlightedWord, setHighlightedWord] = useState(null);
   const [saveStatus, setSaveStatus] = useState("");
   const [isRestoring, setIsRestoring] = useState(false);
+  const [backupError, setBackupError] = useState(false); // ✅ 추가 상태
 
   const pageSize = 30;
   const skipNextSaveRef = useRef(false);
@@ -45,7 +46,6 @@ function App() {
 
   useSyncWithFirebase({ auth, db, setUser, setWords });
 
-  // ✅ skipNextSaveRef 전달 추가
   const { addWord, handleReview, deleteWord } = useWordActions({
     words,
     setWords,
@@ -63,6 +63,7 @@ function App() {
     setSaveStatus,
     setIsRestoring,
     skipNextSaveRef,
+    setBackupError, // ✅ 상태 전달
   });
 
   const {
@@ -91,7 +92,16 @@ function App() {
 
   return (
     <div className="container" style={{ padding: "1rem", fontFamily: "Arial" }}>
-      {isRestoring && <div className="progress-bar" />}
+      {(isRestoring || backupError) && (
+        <div
+          style={{
+            height: "4px",
+            backgroundColor: backupError ? "#dc3545" : "#4caf50",
+            animation: "loading 1.5s infinite",
+            width: "100%",
+          }}
+        />
+      )}
 
       <HeaderBar
         wordCount={Object.keys(words).length}
