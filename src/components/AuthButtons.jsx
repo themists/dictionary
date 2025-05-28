@@ -36,8 +36,8 @@ function AuthButtons({ user, setUser, auth, provider, t, lang }) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <button onClick={handleLogout}>🔓</button>
-            <span style={{ fontSize: "0.9rem", color: "#666" }}>
-              {user.displayName || user.email}  , Welcome back!
+            <span style={{ fontSize: "1rem", color: "#666" }}>
+              {user.displayName || user.email}, Welcome back!
             </span>
           </div>
           <div>
