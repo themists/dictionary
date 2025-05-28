@@ -65,7 +65,7 @@ function App() {
     const timer = setTimeout(async () => {
       try {
         await optimizedBackup(user.uid, words);
-        setSaveStatus("✅ 저장되음");
+        setSaveStatus(""); // 성공 시 메시지 생략
       } catch (err) {
         console.error("❌ 저장 실패:", err);
         setSaveStatus("⚠️ 저장 실패");
