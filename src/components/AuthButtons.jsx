@@ -3,7 +3,7 @@ import { useState } from "react";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { optimizedBackup } from "../utils/optimizedBackup";
 import { firestoreRestore } from "../utils/firestoreRestore";
-import { restoreFromFirestoreWithMerge } from "../utils/restoreFromFirestoreWithMerge";
+import { restoreFromFirestoreWithMerge } from "../utils/firestoreUtils";
 
 function AuthButtons({ user, setUser, auth, provider, db, words, setWords, t, lang }) {
   const [isRestoring, setIsRestoring] = useState(false);
