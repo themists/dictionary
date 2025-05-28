@@ -27,6 +27,7 @@ function App() {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
   const [highlightedWord, setHighlightedWord] = useState(null);
   const [saveStatus, setSaveStatus] = useState("");
+  const [isRestoring, setIsRestoring] = useState(false); // ✅ 복원 중 상태
 
   const pageSize = 30;
   const skipNextSaveRef = useRef(false);
@@ -79,11 +80,14 @@ function App() {
     const handleVisibilityChange = async () => {
       if (document.visibilityState === "visible" && user && inputWord.length === 0) {
         try {
+          setIsRestoring(true); // ✅ 시작
           await restoreFromFirestoreWithMerge(user.uid, db, setWords);
           skipNextSaveRef.current = true;
           console.log("🔁 복원 완료, 자동 저장 1회 생략");
         } catch (error) {
           console.error("❌ 복원 실패:", error);
+        } finally {
+          setTimeout(() => setIsRestoring(false), 500); // ✅ 부드럽게 사라짐
         }
       }
     };
@@ -113,6 +117,19 @@ function App() {
 
   return (
     <div className="container" style={{ padding: "1rem", fontFamily: "Arial" }}>
+      {isRestoring && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "4px",
+          backgroundColor: "#3366ff",
+          zIndex: 1000,
+          animation: "pulse 1.2s ease-in-out infinite"
+        }} />
+      )}
+
       <HeaderBar
         wordCount={Object.keys(words).length}
         darkMode={darkMode}
