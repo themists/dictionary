@@ -17,7 +17,7 @@ function HeaderBar({
 
   return (
     <div className="header-title-line">
-      <h1>EchoWord99 ({wordCount} words)</h1>
+      <h1>EchoWord ({wordCount} words)</h1>
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
         <button onClick={() => window.location.reload()}>🔄</button>
         <button onClick={() => setShowSettings(!showSettings)}>⚙️</button>
