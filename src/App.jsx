@@ -8,6 +8,7 @@ import SortControls from "./components/SortControls";
 import PaginationBlock from "./components/PaginationBlock";
 import WordInput from "./components/WordInput";
 import WordList from "./components/WordList";
+import ScrollButtons from "./components/ScrollButtons";
 
 import { getDaysSince } from "./utils/dateUtils";
 import t from "./utils/i18n";
@@ -172,6 +173,8 @@ function App() {
       <div style={{ marginTop: "2rem", fontSize: "0.8rem", color: "#888", textAlign: "center" }}>
         {t[lang].version(`v${import.meta.env.VITE_APP_VERSION}`)}
       </div>
+      
+      <ScrollButtons /> {/* ✅ 스크롤 버튼 추가 */}
     </div>
   );
 }
