@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useState } from "react";
 import "./App.css";
 
 import { db, auth, provider } from "./utils/firebase";
@@ -11,19 +11,15 @@ import WordList from "./components/WordList";
 import ScrollButtons from "./components/ScrollButtons";
 import SettingsPanel from "./components/SettingsPanel";
 
-import { getDaysSince } from "./utils/dateUtils";
-import t from "./utils/i18n";
-
 import useSyncWithFirebase from "./hooks/useSyncWithFirebase";
 import useWordActions from "./hooks/useWordActions";
-import { optimizedBackup } from "./utils/optimizedBackup";
-import { restoreFromFirestoreWithMerge } from "./utils/firestoreUtils";
-import {
-  saveDataToFirestore,
-  restoreDataFromFirestore,
-  exportWordsToFile,
-  importWordsFromFile
-} from "./utils/backupUtils";
+import useAppLifecycle from "./hooks/useAppLifecycle";
+import useSettingsPanel from "./hooks/useSettingsPanel";
+
+import { getDaysSince } from "./utils/dateUtils";
+import { getSortedEntries, getPaginatedEntries } from "./utils/wordUtils";
+import { createBackupHandlers } from "./handlers/backupHandlers";
+import t from "./utils/i18n";
 
 function App() {
   const [words, setWords] = useState({});
@@ -36,98 +32,42 @@ function App() {
   const [highlightedWord, setHighlightedWord] = useState(null);
   const [saveStatus, setSaveStatus] = useState("");
   const [isRestoring, setIsRestoring] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
 
-  const settingsRef = useRef(null);
-  const settingsButtonRef = useRef(null); // ✅ 세팅 버튼 추적
   const pageSize = 30;
   const skipNextSaveRef = useRef(false);
 
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (
-        settingsRef.current &&
-        !settingsRef.current.contains(event.target) &&
-        settingsButtonRef.current &&
-        !settingsButtonRef.current.contains(event.target)
-      ) {
-        setShowSettings(false);
-      }
-    }
-
-    if (showSettings) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showSettings]);
-
-  useEffect(() => {
-    document.body.classList.toggle("dark-mode", darkMode);
-    localStorage.setItem("darkMode", darkMode);
-  }, [darkMode]);
-
-  useEffect(() => {
-    if (!user) return;
-    const snapshotKey = `wordSnapshot_${user.uid}`;
-    if (localStorage.getItem("wordData") && !localStorage.getItem(snapshotKey)) {
-      localStorage.setItem(snapshotKey, localStorage.getItem("wordData"));
-    }
-    try {
-      const saved = JSON.parse(localStorage.getItem(snapshotKey)) || {};
-      setWords(saved);
-    } catch (err) {
-      console.error("❌ localStorage 복원 실패:", err);
-      setWords({});
-    }
-  }, [user]);
+  const {
+    showSettings,
+    toggleSettings,
+    settingsRef,
+    settingsButtonRef,
+  } = useSettingsPanel();
 
   useSyncWithFirebase({ auth, db, setUser, setWords });
 
   const { addWord, handleReview, deleteWord } = useWordActions({ words, setWords, user, db });
 
-  useEffect(() => {
-    if (!user || !words) return;
-    if (skipNextSaveRef.current) {
-      skipNextSaveRef.current = false;
-      return;
-    }
+  useAppLifecycle({
+    user,
+    words,
+    inputWord,
+    darkMode,
+    setWords,
+    setSaveStatus,
+    setIsRestoring,
+    skipNextSaveRef,
+  });
 
-    const timer = setTimeout(async () => {
-      try {
-        await optimizedBackup(user.uid, words);
-        setSaveStatus("");
-      } catch (err) {
-        console.error("❌ 저장 실패:", err);
-        setSaveStatus("⚠️ 저장 실패");
-      }
-    }, 3000);
+  const {
+    handleBackup,
+    handleRestore,
+    handleExport,
+    handleImport
+  } = createBackupHandlers({ user, words, setWords });
 
-    return () => clearTimeout(timer);
-  }, [user, words]);
-
-  useEffect(() => {
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === "visible" && user && inputWord.length === 0) {
-        try {
-          setIsRestoring(true);
-          await restoreFromFirestoreWithMerge(user.uid, db, setWords);
-          skipNextSaveRef.current = true;
-          console.log("🔁 복원 완료, 자동 저장 1회 생략");
-        } catch (error) {
-          console.error("❌ 복원 실패:", error);
-        } finally {
-          setTimeout(() => setIsRestoring(false), 500);
-        }
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [user, inputWord]);
+  const sortedEntries = getSortedEntries(words, sortMode, highlightedWord);
+  const paginated = getPaginatedEntries(sortedEntries, page, pageSize);
+  const totalPages = Math.ceil(sortedEntries.length / pageSize);
 
   const toggleDarkMode = () => {
     const newMode = !darkMode;
@@ -141,53 +81,6 @@ function App() {
     setLang(newLang);
     localStorage.setItem("lang", newLang);
   };
-
-  const handleBackup = async () => {
-    if (!user) return;
-    await saveDataToFirestore(user.uid, words);
-    alert("✅ 백업이 완료되었습니다.");
-  };
-
-  const handleRestore = async () => {
-    if (!user) return;
-    const restored = await restoreDataFromFirestore(user.uid);
-    if (restored) {
-      setWords(restored);
-      alert("✅ 복원이 완료되었습니다. 새로고침합니다.");
-      setTimeout(() => window.location.reload(), 800);
-    }
-  };
-
-  const handleExport = () => {
-    exportWordsToFile(words);
-  };
-
-  const handleImport = async (file) => {
-    if (!file) return;
-    const imported = await importWordsFromFile(file);
-    if (imported) setWords((prev) => ({ ...prev, ...imported }));
-    alert("✅ 병합 완료");
-  };
-
-  const sortedEntries = Object.entries(words)
-    .filter(([w]) => w !== highlightedWord)
-    .sort(([a, aData], [b, bData]) => {
-      switch (sortMode) {
-        case "abcAsc": return a.localeCompare(b);
-        case "abcDesc": return b.localeCompare(a);
-        case "countDesc": return bData.count - aData.count || a.localeCompare(b);
-        case "dateAsc": return new Date(aData.lastReviewedAt) - new Date(bData.lastReviewedAt) || a.localeCompare(b);
-        case "dateDesc": return new Date(bData.lastReviewedAt) - new Date(aData.lastReviewedAt) || a.localeCompare(b);
-        default: return aData.count - bData.count || a.localeCompare(b);
-      }
-    });
-
-  const withHighlight = highlightedWord && words[highlightedWord]
-    ? [[highlightedWord, words[highlightedWord]], ...sortedEntries]
-    : sortedEntries;
-
-  const paginated = withHighlight.slice((page - 1) * pageSize, page * pageSize);
-  const totalPages = Math.ceil(withHighlight.length / pageSize);
 
   return (
     <div className="container" style={{ padding: "1rem", fontFamily: "Arial" }}>
@@ -203,8 +96,8 @@ function App() {
         toggleLang={toggleLang}
         lang={lang}
         darkMode={darkMode}
-        onToggleSettings={() => setShowSettings((prev) => !prev)}
-        settingsButtonRef={settingsButtonRef} // ✅ 버튼 ref 전달
+        onToggleSettings={toggleSettings}
+        settingsButtonRef={settingsButtonRef}
       />
 
       <div className="top-group fixed-width-section">
