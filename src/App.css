@@ -411,8 +411,9 @@ button:disabled {
 
 /* 헤더 우측 버튼 (🔄, ⚙️) 여백 축소용 */
 .header-title-line button {
-  padding: 0.3rem 0.5rem;
+  padding: 0.4rem 0.6rem; /* ⬅︎ 세로는 약간 넉넉하게, 가로는 소폭 줄임 */
   font-size: 1rem;
   line-height: 1;
   min-width: auto;
+  border-radius: 0.5rem; /* 버튼 모서리도 부드럽게 */
 }
