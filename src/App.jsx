@@ -87,7 +87,7 @@ function App() {
         } catch (error) {
           console.error("❌ 복원 실패:", error);
         } finally {
-          setTimeout(() => setIsRestoring(false), 500); // ✅ 부드럽게 사라짐
+          setTimeout(() => setIsRestoring(false), 3000); // ✅ 부드럽게 사라짐
         }
       }
     };
