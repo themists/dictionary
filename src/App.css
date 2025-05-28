@@ -419,7 +419,9 @@ button:disabled {
   justify-content: flex-start; /* ✅ 왼쪽 정렬 */
   max-width: 100%;
   margin: 0 0 1rem 0; /* ✅ 좌측 정렬용 여백 제거 */
-  padding: 0 1rem;
+  /* padding: 0 1rem; */ /* 이 값을 수정 */
+  padding-left: 0; /* 타이틀을 더 왼쪽으로 붙이기 위해 */
+  padding-right: 1rem; /* 오른쪽 아이콘들과의 간격은 유지 */
   gap: 0.75rem; /* 버튼과 타이틀 사이 간격 조절 (선택 사항) */
 }
 
