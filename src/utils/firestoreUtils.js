@@ -35,7 +35,14 @@ export async function restoreFromFirestoreWithMerge(userId, db, setWords) {
     }
 
     localStorage.setItem(snapshotKey, JSON.stringify(merged));
-    setWords(merged); // ✅ 병합 후 상태 반영
+
+    if (typeof setWords === "function") {
+      setWords(merged); // ✅ 안전하게 호출
+    } else {
+      console.error("⚠️ setWords is not a function:", setWords);
+      alert("⚠️ 복원에 실패했습니다. setWords 함수가 전달되지 않았습니다.");
+    }
+
   } catch (err) {
     console.error("❌ restoreFromFirestoreWithMerge 실패:", err);
     alert("⚠️ 병합 복원 중 오류가 발생했습니다.");
