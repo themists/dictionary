@@ -408,3 +408,11 @@ button:disabled {
 .header-title-line h1 {
   white-space: nowrap;
 }
+
+/* 헤더 우측 버튼 (🔄, ⚙️) 여백 축소용 */
+.header-title-line button {
+  padding: 0.3rem 0.5rem;
+  font-size: 1rem;
+  line-height: 1;
+  min-width: auto;
+}
