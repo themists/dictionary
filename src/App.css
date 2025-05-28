@@ -449,3 +449,19 @@ button:disabled {
     padding: 0.6rem 0.5rem; /* 버튼 좌우 여백 줄이기 */
   }
 }
+
+.sort-controls-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sort-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.refresh-button button {
+  padding: 0.5rem 0.8rem;
+}
