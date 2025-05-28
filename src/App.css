@@ -454,14 +454,37 @@ button:disabled {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
+  flex-wrap: nowrap;       /* ❗ 줄바꿈 방지 */
+  gap: 0.5rem;              /* ✅ 간격 축소 */
+  overflow-x: auto;         /* ✅ 혹시라도 넘칠 경우 대응 */
+}
+
+.sort-controls-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: nowrap; /* ❗ 줄바꿈 방지 */
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  overflow-x: auto; /* ✅ 혹시라도 넘칠 경우 대비 */
 }
 
 .sort-buttons {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.3rem; /* 좌측 버튼 간격 축소 */
+  flex-shrink: 1;
+}
+
+.sort-buttons button {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.refresh-button {
+  flex-shrink: 0;
 }
 
 .refresh-button button {
-  padding: 0.5rem 0.8rem;
+  padding: 0.4rem 0.6rem;
 }
