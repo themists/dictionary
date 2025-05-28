@@ -477,8 +477,8 @@ button:disabled {
 }
 
 .sort-buttons button {
-  padding: 0.4rem 0.6rem;
-  font-size: 0.85rem;
+  padding: 0.5rem 0.8rem;   /* 🔼 살짝 확대 */
+  font-size: 0.9rem;        /* 🔼 텍스트 크기 확대 */
 }
 
 .refresh-button {
