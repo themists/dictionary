@@ -1,4 +1,3 @@
-// src/App.jsx
 import { useEffect, useState, useRef } from "react";
 import "./App.css";
 
@@ -10,6 +9,7 @@ import PaginationBlock from "./components/PaginationBlock";
 import WordInput from "./components/WordInput";
 import WordList from "./components/WordList";
 import ScrollButtons from "./components/ScrollButtons";
+import SettingsPanel from "./components/SettingsPanel";
 
 import { getDaysSince } from "./utils/dateUtils";
 import t from "./utils/i18n";
@@ -18,7 +18,6 @@ import useSyncWithFirebase from "./hooks/useSyncWithFirebase";
 import useWordActions from "./hooks/useWordActions";
 import { optimizedBackup } from "./utils/optimizedBackup";
 import { restoreFromFirestoreWithMerge } from "./utils/firestoreUtils";
-
 import {
   saveDataToFirestore,
   restoreDataFromFirestore,
@@ -37,9 +36,30 @@ function App() {
   const [highlightedWord, setHighlightedWord] = useState(null);
   const [saveStatus, setSaveStatus] = useState("");
   const [isRestoring, setIsRestoring] = useState(false);
+  const [showSettings, setShowSettings] = useState(false); // ✅ 설정 창 상태 추가
 
+  const settingsRef = useRef(null); // ✅ 바깥 클릭 감지용
   const pageSize = 30;
   const skipNextSaveRef = useRef(false);
+
+  // ✅ 바깥 클릭 시 설정 닫기
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (settingsRef.current && !settingsRef.current.contains(event.target)) {
+        setShowSettings(false);
+      }
+    }
+
+    if (showSettings) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showSettings]);
 
   useEffect(() => {
     document.body.classList.toggle("dark-mode", darkMode);
@@ -235,6 +255,21 @@ function App() {
       <div style={{ marginTop: "2rem", fontSize: "0.8rem", color: "#888", textAlign: "center" }}>
         {t[lang].version(`v${import.meta.env.VITE_APP_VERSION}`)}
       </div>
+
+      {showSettings && (
+        <div ref={settingsRef} style={{ position: "absolute", right: "1rem", top: "3rem", zIndex: 1000 }}>
+          <SettingsPanel
+            onBackup={handleBackup}
+            onRestore={handleRestore}
+            onExport={handleExport}
+            onImport={handleImport}
+            toggleDarkMode={toggleDarkMode}
+            toggleLang={toggleLang}
+            lang={lang}
+            darkMode={darkMode}
+          />
+        </div>
+      )}
 
       <ScrollButtons />
     </div>
