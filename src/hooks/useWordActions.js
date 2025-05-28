@@ -1,8 +1,7 @@
-import { setDoc, deleteDoc, doc } from "firebase/firestore";
 import { getToday } from "../utils/dateUtils";
 
-export default function useWordActions({ words, setWords, user, db }) {
-  const addWord = async (word, setHighlightedWord, setPage) => {
+export default function useWordActions({ words, setWords, user, db, skipNextSaveRef }) {
+  const addWord = (word, setHighlightedWord, setPage) => {
     const lower = word.toLowerCase().trim();
     if (!lower) return;
 
@@ -25,18 +24,10 @@ export default function useWordActions({ words, setWords, user, db }) {
     setHighlightedWord(lower);
     setPage(1);
     localStorage.setItem("wordData", JSON.stringify(updated));
-
-    if (user) {
-      try {
-        await setDoc(doc(db, "users", user.uid, "words", lower), updated[lower]);
-        console.log("📘 단어 저장 완료:", lower);
-      } catch (err) {
-        console.error("❌ 단어 Firestore 저장 실패:", err);
-      }
-    }
+    skipNextSaveRef.current = true; // ✅ 단어 추가 시 자동 저장 1회 생략
   };
 
-  const handleReview = async (word, sourceType) => {
+  const handleReview = (word, sourceType) => {
     const today = getToday();
     const data = words[word];
     if (!data) return;
@@ -66,31 +57,15 @@ export default function useWordActions({ words, setWords, user, db }) {
 
     setWords(updated);
     localStorage.setItem("wordData", JSON.stringify(updated));
-
-    if (user) {
-      try {
-        await setDoc(doc(db, "users", user.uid, "words", word), updatedWord);
-        console.log("📘 복습 저장 완료:", word);
-      } catch (err) {
-        console.error("❌ 복습 저장 실패:", err);
-      }
-    }
+    skipNextSaveRef.current = true; // ✅ 복습 후 자동 저장 1회 생략
   };
 
-  const deleteWord = async (word) => {
+  const deleteWord = (word) => {
     const updated = { ...words };
     delete updated[word];
     setWords(updated);
     localStorage.setItem("wordData", JSON.stringify(updated));
-
-    if (user) {
-      try {
-        await deleteDoc(doc(db, "users", user.uid, "words", word));
-        console.log("🗑️ 단어 삭제 완료:", word);
-      } catch (err) {
-        console.error("❌ 단어 삭제 실패:", err);
-      }
-    }
+    skipNextSaveRef.current = true; // ✅ 삭제 후 자동 저장 1회 생략
   };
 
   return { addWord, handleReview, deleteWord };

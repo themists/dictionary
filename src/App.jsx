@@ -45,7 +45,14 @@ function App() {
 
   useSyncWithFirebase({ auth, db, setUser, setWords });
 
-  const { addWord, handleReview, deleteWord } = useWordActions({ words, setWords, user, db });
+  // ✅ skipNextSaveRef 전달 추가
+  const { addWord, handleReview, deleteWord } = useWordActions({
+    words,
+    setWords,
+    user,
+    db,
+    skipNextSaveRef
+  });
 
   useAppLifecycle({
     user,

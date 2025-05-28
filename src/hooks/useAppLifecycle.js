@@ -1,7 +1,8 @@
 // src/hooks/useAppLifecycle.js
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { optimizedBackup } from "../utils/optimizedBackup";
 import { restoreFromFirestoreWithMerge } from "../utils/firestoreUtils";
+import { debounce } from "../utils/debounce";
 
 export default function useAppLifecycle({
   user,
@@ -35,15 +36,9 @@ export default function useAppLifecycle({
     }
   }, [user]);
 
-  // 단어 자동 저장
-  useEffect(() => {
-    if (!user || !words) return;
-    if (skipNextSaveRef.current) {
-      skipNextSaveRef.current = false;
-      return;
-    }
-
-    const timer = setTimeout(async () => {
+  // ✅ 자동 저장 (debounce 적용)
+  const debouncedBackup = useRef(
+    debounce(async () => {
       try {
         await optimizedBackup(user.uid, words);
         setSaveStatus("");
@@ -51,9 +46,17 @@ export default function useAppLifecycle({
         console.error("❌ 저장 실패:", err);
         setSaveStatus("⚠️ 저장 실패");
       }
-    }, 3000);
+    }, 5000)
+  ).current;
 
-    return () => clearTimeout(timer);
+  useEffect(() => {
+    if (!user || !words) return;
+    if (skipNextSaveRef.current) {
+      skipNextSaveRef.current = false;
+      return;
+    }
+
+    debouncedBackup(); // ✅ debounce된 자동 저장
   }, [user, words]);
 
   // 탭 복귀 시 자동 복원
