@@ -1,12 +1,12 @@
 import { collection, getDocs } from "firebase/firestore";
 
 /**
- * Firestore와 localStorage 데이터를 병합하여 복원
+ * Firestore와 localStorage 데이터를 병합하여 복원하고 setWords에 적용
  * @param {string} userId - Firebase 사용자 UID
  * @param {object} db - Firebase Firestore 인스턴스
- * @returns {object|null} - 병합된 단어 객체 또는 null
+ * @param {function} setWords - 상태 업데이트 함수
  */
-export async function restoreFromFirestoreWithMerge(userId, db) {
+export async function restoreFromFirestoreWithMerge(userId, db, setWords) {
   try {
     const snapshotKey = `wordSnapshot_${userId}`;
 
@@ -35,10 +35,9 @@ export async function restoreFromFirestoreWithMerge(userId, db) {
     }
 
     localStorage.setItem(snapshotKey, JSON.stringify(merged));
-    return merged;
+    setWords(merged); // ✅ 병합 후 상태 반영
   } catch (err) {
     console.error("❌ restoreFromFirestoreWithMerge 실패:", err);
     alert("⚠️ 병합 복원 중 오류가 발생했습니다.");
-    return null;
   }
 }

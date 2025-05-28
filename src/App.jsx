@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "./App.css";
 
 import { db, auth, provider } from "./utils/firebase";
@@ -15,6 +15,7 @@ import t from "./utils/i18n";
 import useSyncWithFirebase from "./hooks/useSyncWithFirebase";
 import useWordActions from "./hooks/useWordActions";
 import { optimizedBackup } from "./utils/optimizedBackup";
+import { restoreFromFirestoreWithMerge } from "./utils/firestoreUtils";
 
 function App() {
   const [words, setWords] = useState({});
@@ -28,22 +29,19 @@ function App() {
   const [saveStatus, setSaveStatus] = useState("");
 
   const pageSize = 30;
+  const skipNextSaveRef = useRef(false);
 
-  // 하버 테마 적용
   useEffect(() => {
     document.body.classList.toggle("dark-mode", darkMode);
     localStorage.setItem("darkMode", darkMode);
   }, [darkMode]);
 
-  // localStorage 복원
   useEffect(() => {
     if (!user) return;
-
     const snapshotKey = `wordSnapshot_${user.uid}`;
     if (localStorage.getItem("wordData") && !localStorage.getItem(snapshotKey)) {
       localStorage.setItem(snapshotKey, localStorage.getItem("wordData"));
     }
-
     try {
       const saved = JSON.parse(localStorage.getItem(snapshotKey)) || {};
       setWords(saved);
@@ -53,19 +51,21 @@ function App() {
     }
   }, [user]);
 
-  // Firebase 로그인 감지 및 동기화
   useSyncWithFirebase({ auth, db, setUser, setWords });
 
   const { addWord, handleReview, deleteWord } = useWordActions({ words, setWords, user, db });
 
-  // 자동 저장 상태 표시
   useEffect(() => {
     if (!user || !words) return;
+    if (skipNextSaveRef.current) {
+      skipNextSaveRef.current = false;
+      return;
+    }
 
     const timer = setTimeout(async () => {
       try {
         await optimizedBackup(user.uid, words);
-        setSaveStatus(""); // 성공 시 메시지 생략
+        setSaveStatus("");
       } catch (err) {
         console.error("❌ 저장 실패:", err);
         setSaveStatus("⚠️ 저장 실패");
@@ -75,22 +75,32 @@ function App() {
     return () => clearTimeout(timer);
   }, [user, words]);
 
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "visible" && user && inputWord.length === 0) {
+        try {
+          await restoreFromFirestoreWithMerge(user.uid, db, setWords);
+          skipNextSaveRef.current = true;
+          console.log("🔁 복원 완료, 자동 저장 1회 생략");
+        } catch (error) {
+          console.error("❌ 복원 실패:", error);
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [user, inputWord]);
+
   const sortedEntries = Object.entries(words)
     .filter(([w]) => w !== highlightedWord)
     .sort(([a, aData], [b, bData]) => {
       switch (sortMode) {
-        case "abcAsc":
-          return a.localeCompare(b);
-        case "abcDesc":
-          return b.localeCompare(a);
-        case "countDesc":
-          return bData.count - aData.count || a.localeCompare(b);
-        case "dateAsc":
-          return new Date(aData.lastReviewedAt) - new Date(bData.lastReviewedAt) || a.localeCompare(b);
-        case "dateDesc":
-          return new Date(bData.lastReviewedAt) - new Date(aData.lastReviewedAt) || a.localeCompare(b);
-        default:
-          return aData.count - bData.count || a.localeCompare(b);
+        case "abcAsc": return a.localeCompare(b);
+        case "abcDesc": return b.localeCompare(a);
+        case "countDesc": return bData.count - aData.count || a.localeCompare(b);
+        case "dateAsc": return new Date(aData.lastReviewedAt) - new Date(bData.lastReviewedAt) || a.localeCompare(b);
+        case "dateDesc": return new Date(bData.lastReviewedAt) - new Date(aData.lastReviewedAt) || a.localeCompare(b);
+        default: return aData.count - bData.count || a.localeCompare(b);
       }
     });
 
