@@ -1,4 +1,5 @@
 // src/components/AuthButtons.jsx
+import { useState } from "react";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { optimizedBackup } from "../utils/optimizedBackup";
 import { firestoreRestore } from "../utils/firestoreRestore";
