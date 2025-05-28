@@ -1,0 +1,32 @@
+src/
+├── App.jsx                        # 💡 메인 앱 컴포넌트 – 각 모듈 연결 및 UI 뷰 구성
+├── App.css                        # 🎨 전체 UI 스타일 정의
+
+├── components/                    # 🧱 UI 시각 요소 모음 (재사용 가능한 컴포넌트)
+│   ├── HeaderBar.jsx              # 📌 상단 타이틀 바 + 백업/복원/설정/다크모드 버튼
+│   ├── AuthButtons.jsx            # 🔐 로그인/로그아웃 버튼 및 Firebase 인증 처리
+│   ├── SortControls.jsx           # 🔽 정렬 버튼 그룹 (A-Z, 횟수, 날짜 등)
+│   ├── PaginationBlock.jsx        # 🔢 페이지네이션 컨트롤 (이전/다음 버튼)
+│   ├── WordInput.jsx              # ✏️ 단어 입력창 (신규 단어 추가)
+│   ├── WordList.jsx               # 📃 단어 카드 목록 표시 (리스트 렌더링)
+│   ├── SettingsPanel.jsx          # ⚙️ 설정 팝업창 (백업/복원/언어/테마 전환 등)
+│   └── ScrollButtons.jsx          # ⬆️⬇️ 상하 스크롤 이동 버튼
+
+├── hooks/                         # 🔁 상태 및 이벤트 관리를 위한 커스텀 훅 모음
+│   ├── useSyncWithFirebase.js     # ☁️ 로그인 상태 및 Firestore 데이터 초기 동기화
+│   ├── useWordActions.js          # ✍️ 단어 추가 / 복습 처리 / 삭제 액션 정의
+│   ├── useAppLifecycle.js         # 🔄 다크모드 적용, 자동 저장, 자동 복원 등 앱 생명주기 처리
+│   └── useSettingsPanel.js        # ⚙️ 설정창 상태 및 외부 클릭 감지 훅
+
+├── handlers/                      # 🎮 백업/복원/파일 처리 핸들러 함수 모음
+│   └── backupHandlers.js          # 📂 백업, 복원, 파일 내보내기/가져오기 로직 모듈화
+
+├── utils/                         # 🔧 유틸 함수 및 외부 서비스 설정
+│   ├── firebase.js                # 🔑 Firebase 초기화 및 인증/DB 인스턴스 반환
+│   ├── dateUtils.js               # 📆 날짜 간격 계산 함수 (복습일 계산)
+│   ├── i18n.js                    # 🌐 다국어 지원 문자열 모음 (한/영 토글)
+│   ├── wordUtils.js               # 🔠 단어 정렬/하이라이트/페이지 계산 유틸
+│   ├── backupUtils.js             # 💾 Firestore 백업/복원 + 파일 import/export 함수
+│   └── optimizedBackup.js         # ⚡ 3초 지연 저장 + 변경사항만 저장하는 백업 최적화 함수
+
+└── main.jsx                       # 🚀 Vite 앱 진입점 – React 앱 렌더링 시작점
