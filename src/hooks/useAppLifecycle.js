@@ -1,5 +1,5 @@
 // src/hooks/useAppLifecycle.js
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { optimizedBackup } from "../utils/optimizedBackup";
 import { restoreFromFirestoreWithMerge } from "../utils/firestoreUtils";
 import { debounce } from "../utils/debounce";
@@ -13,9 +13,8 @@ export default function useAppLifecycle({
   setSaveStatus,
   setIsRestoring,
   skipNextSaveRef,
+  setBackupError // ✅ 외부에서 전달받음
 }) {
-  const [backupError, setBackupError] = useState(false); // ✅ 저장 중단 상태 추가
-
   // 다크모드 반영 및 저장
   useEffect(() => {
     document.body.classList.toggle("dark-mode", darkMode);
@@ -38,30 +37,28 @@ export default function useAppLifecycle({
     }
   }, [user]);
 
-  // ✅ 자동 저장 (debounce 적용 + quota 초과 시 중단)
+  // ✅ 자동 저장 (debounce + quota 초과 시 중단 상태 외부로 전달)
   const debouncedBackup = useRef(
     debounce(async () => {
-      if (backupError) return; // ❌ 자동 저장 중단 시 저장 생략
-
       try {
         await optimizedBackup(user.uid, words);
         setSaveStatus("");
+        if (setBackupError) setBackupError(false); // 정상 시 상태 초기화
       } catch (err) {
         console.error("❌ 저장 실패:", err);
 
         const message = err?.message || "";
         const code = err?.code || "";
 
-        // ✅ quota 초과 감지 시 자동 저장 일시 중단
         if (message.includes("quota") || code === "resource-exhausted") {
-          console.warn("⚠️ Firestore quota exceeded. 자동 저장 30분 중단");
-          setBackupError(true);
+          console.warn("⚠️ Firestore quota exceeded. 자동 저장 중단");
+          if (setBackupError) setBackupError(true); // ⛔ 외부 상태로 오류 표시
           setSaveStatus("⏸️ 저장 중단됨: Firebase 일 사용량 초과");
 
           setTimeout(() => {
-            setBackupError(false);
-            setSaveStatus(""); // 상태 복구
-          }, 30 * 60 * 1000); // 30분 후 재시도 허용
+            if (setBackupError) setBackupError(false);
+            setSaveStatus("");
+          }, 30 * 60 * 1000); // 30분 후 자동 복구
         } else {
           setSaveStatus("⚠️ 저장 실패");
         }
@@ -76,7 +73,7 @@ export default function useAppLifecycle({
       return;
     }
 
-    debouncedBackup(); // ✅ debounce된 자동 저장
+    debouncedBackup();
   }, [user, words]);
 
   // 탭 복귀 시 자동 복원

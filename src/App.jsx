@@ -93,14 +93,7 @@ function App() {
   return (
     <div className="container" style={{ padding: "1rem", fontFamily: "Arial" }}>
       {(isRestoring || backupError) && (
-        <div
-          style={{
-            height: "4px",
-            backgroundColor: backupError ? "#dc3545" : "#4caf50",
-            animation: "loading 1.5s infinite",
-            width: "100%",
-          }}
-        />
+        <div className={`progress-bar ${backupError ? "error" : ""}`} />
       )}
 
       <HeaderBar
