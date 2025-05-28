@@ -33,11 +33,13 @@ function AuthButtons({ user, setUser, auth, provider, t, lang }) {
             flexWrap: "nowrap"
           }}
         >
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "left" }}>
             <button onClick={handleLogout}>🔓</button>
-            <span style={{ fontSize: "0.9rem", color: "#666" }}>{user.displayName || user.email}</span>
+            <span style={{ fontSize: "0.9rem", color: "#666" }}>
+               Welcome back!
+            </span>
           </div>
-          <div>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "right" }}>
             <button onClick={() => window.location.reload()}>🔄</button>
           </div>
         </div>
