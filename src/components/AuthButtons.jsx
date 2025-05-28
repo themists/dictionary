@@ -33,15 +33,34 @@ function AuthButtons({ user, setUser, auth, provider, t, lang }) {
             flexWrap: "nowrap"
           }}
         >
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "left" }}>
-            <button onClick={handleLogout}>🔓</button>
-            <span style={{ fontSize: "0.9rem", color: "#666" }}>
-               Welcome back!
-            </span>
-          </div>
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "right" }}>
-            <button onClick={() => window.location.reload()}>🔄</button>
-          </div>
+// 이 div가 두 개의 자식 div를 감싸는 부모 역할을 합니다.
+<div style={{
+  display: "flex",             // 자식 div들을 flex 아이템으로 만듭니다.
+  justifyContent: "space-between", // 첫 번째 자식은 왼쪽, 두 번째 자식은 오른쪽에 배치합니다.
+  alignItems: "center",        // 자식 div들을 수직 중앙에 정렬합니다.
+  width: "100%"                // 부모 div가 전체 너비를 차지하도록 하여 space-between이 효과적으로 작동하게 합니다.
+}}>
+  {/* 첫 번째 div (왼쪽 정렬 대상) */}
+  <div style={{
+    display: "flex",        // 내부 요소(버튼, 텍스트)를 위한 flex
+    gap: "0.5rem",
+    alignItems: "center"     // 버튼과 텍스트를 수직 중앙 정렬
+  }}>
+    <button onClick={handleLogout}>🔓</button>
+    <span style={{ fontSize: "0.9rem", color: "#666" }}>
+      Welcome back!
+    </span>
+  </div>
+
+  {/* 두 번째 div (오른쪽 정렬 대상) */}
+  <div style={{
+    display: "flex",        // 내부 요소(버튼)를 위한 flex (항목이 하나라도 일관성을 위해 사용 가능)
+    gap: "0.5rem",          // 필요에 따라 조절
+    alignItems: "center"     // 버튼을 수직 중앙 정렬
+  }}>
+    <button onClick={() => window.location.reload()}>🔄</button>
+  </div>
+</div>
         </div>
       )}
     </div>
