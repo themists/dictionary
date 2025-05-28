@@ -398,11 +398,13 @@ button:disabled {
 /* 제목 줄: EchoWord + 🔄 + ⚙️ 정렬 고정용 */
 .header-title-line {
   max-width: 600px;
-  margin: 0 auto 1rem;
-  padding: 0 1rem;
+  margin: 0 0 1rem 0;         /* 가운데 정렬 제거 */
+  padding-left: 0.5rem;       /* 왼쪽 여백 축소 */
+  padding-right: 1rem;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start; /* 좌측 정렬 */
   align-items: center;
+  gap: 0.75rem;               /* 타이틀과 버튼 사이 간격 */
 }
 
 .header-title-line h1 {
