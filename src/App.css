@@ -489,21 +489,27 @@ button:disabled {
   padding: 0.4rem 0.6rem;
 }
 
-.settings-panel button,
-.settings-panel .import-label {
-  min-width: 140px;
-  max-width: 140px;  /* ❗ Import 버튼이 너무 커지지 않도록 고정 */
-  text-align: center;
-  display: inline-block;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  background-color: #e0e0e0;
-  color: #222;
-  cursor: pointer;
-  font-size: 1rem;
+/* Add this to your CSS file */
+.settings-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center items horizontally if desired */
 }
 
-.settings-panel .import-label input {
-  display: none; /* 숨겨진 파일 입력창 */
+.settings-button {
+  width: 200px; /* Adjust this value as needed to match your desired import button width */
+  /* You might also want to add padding, margin, etc., for consistent styling */
+  padding: 10px 20px;
+  margin-bottom: 10px; /* Space between buttons */
+  box-sizing: border-box; /* Include padding and border in the element's total width and height */
+  text-align: center; /* Center text within the button */
+}
+
+.import-label {
+  /* This label will also have the settings-button class */
+  display: flex; /* Make the label a flex container to center its content */
+  justify-content: center; /* Center the text horizontally */
+  align-items: center; /* Center the text vertically */
+  cursor: pointer; /* Indicate it's clickable */
 }
 

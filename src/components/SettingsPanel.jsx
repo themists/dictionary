@@ -33,21 +33,23 @@ function SettingsPanel({
     <div className="settings-panel">
       <h2>Settings</h2>
 
-      <button onClick={toggleDarkMode}>
+      {/* Apply a common class to all buttons for styling */}
+      <button onClick={toggleDarkMode} className="settings-button">
         {darkMode ? "🌞 Light Mode" : "🌙 Dark Mode"}
       </button>
 
-      <button onClick={toggleLang}>
+      <button onClick={toggleLang} className="settings-button">
         {lang === "en" ? "🇰🇷 한국어" : "🇺🇸 English"}
       </button>
 
-      <button onClick={handleConfirmedBackup}>💾 Backup</button>
+      <button onClick={handleConfirmedBackup} className="settings-button">💾 Backup</button>
 
-      <button onClick={handleConfirmedRestore}>♻️ Restore</button>
+      <button onClick={handleConfirmedRestore} className="settings-button">♻️ Restore</button>
 
-      <button onClick={onExport}>📤 Export</button>
+      <button onClick={onExport} className="settings-button">📤 Export</button>
 
-      <label className="import-label">
+      {/* The label and input for import, also styled to match button width */}
+      <label className="import-label settings-button"> {/* Add settings-button class here */}
         📥 Import
         <input
           type="file"
