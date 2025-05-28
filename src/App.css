@@ -491,6 +491,19 @@ button:disabled {
 
 .settings-panel button,
 .settings-panel .import-label {
-  min-width: 140px; /* ❗ Import 버튼과 비슷한 폭 */
+  min-width: 140px;
+  max-width: 140px;  /* ❗ Import 버튼이 너무 커지지 않도록 고정 */
   text-align: center;
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  background-color: #e0e0e0;
+  color: #222;
+  cursor: pointer;
+  font-size: 1rem;
 }
+
+.settings-panel .import-label input {
+  display: none; /* 숨겨진 파일 입력창 */
+}
+
