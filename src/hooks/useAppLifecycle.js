@@ -13,7 +13,7 @@ export default function useAppLifecycle({
   setSaveStatus,
   setIsRestoring,
   skipNextSaveRef,
-  setBackupError // ✅ 외부에서 전달받음
+  setBackupError
 }) {
   // 다크모드 반영 및 저장
   useEffect(() => {
@@ -23,8 +23,10 @@ export default function useAppLifecycle({
 
   // 로컬스토리지에서 복원
   useEffect(() => {
-    if (!user) return;
-    const snapshotKey = `wordSnapshot_${user.uid}`;
+    const uid = user?.uid;
+    if (!uid) return;
+
+    const snapshotKey = `wordSnapshot_${uid}`;
     if (localStorage.getItem("wordData") && !localStorage.getItem(snapshotKey)) {
       localStorage.setItem(snapshotKey, localStorage.getItem("wordData"));
     }
@@ -37,13 +39,16 @@ export default function useAppLifecycle({
     }
   }, [user]);
 
-  // ✅ 자동 저장 (debounce + quota 초과 시 중단 상태 외부로 전달)
+  // 자동 저장 (debounce + quota 초과 시 중단 상태 외부로 전달)
   const debouncedBackup = useRef(
     debounce(async () => {
+      const uid = user?.uid;
+      if (!uid) return;
+
       try {
-        await optimizedBackup(user.uid, words);
+        await optimizedBackup(uid, words);
         setSaveStatus("");
-        if (setBackupError) setBackupError(false); // 정상 시 상태 초기화
+        if (setBackupError) setBackupError(false);
       } catch (err) {
         console.error("❌ 저장 실패:", err);
 
@@ -52,8 +57,9 @@ export default function useAppLifecycle({
 
         if (message.includes("quota") || code === "resource-exhausted") {
           console.warn("⚠️ Firestore quota exceeded. 자동 저장 중단");
-          if (setBackupError) setBackupError(true); // ⛔ 외부 상태로 오류 표시
-          setSaveStatus("⏸️ 저장 중단됨: Firebase 일 사용량 초과");
+          if (setBackupError) setBackupError(true);
+
+          setSaveStatus("⏸️ 저장이 중단되었습니다. Firebase 일일 사용량 초과로 인해 30분 후 자동 재시도됩니다.");
 
           setTimeout(() => {
             if (setBackupError) setBackupError(false);
@@ -80,9 +86,12 @@ export default function useAppLifecycle({
   useEffect(() => {
     const handleVisibilityChange = async () => {
       if (document.visibilityState === "visible" && user && inputWord.length === 0) {
+        const uid = user?.uid;
+        if (!uid) return;
+
         try {
           setIsRestoring(true);
-          await restoreFromFirestoreWithMerge(user.uid, setWords);
+          await restoreFromFirestoreWithMerge(uid, setWords);
           skipNextSaveRef.current = true;
           console.log("🔁 복원 완료, 자동 저장 1회 생략");
         } catch (error) {
