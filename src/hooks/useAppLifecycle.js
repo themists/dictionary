@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { optimizedBackup } from "../utils/optimizedBackup";
 import { restoreFromFirestoreWithMerge } from "../utils/firestoreUtils";
 import { debounce } from "../utils/debounce";
+import { db } from "../utils/firebase"; // ✅ 1단계: db 인자 추가
 
 export default function useAppLifecycle({
   user,
@@ -15,13 +16,13 @@ export default function useAppLifecycle({
   skipNextSaveRef,
   setBackupError
 }) {
-  // 다크모드 반영 및 저장
+  // ✅ 다크모드 설정
   useEffect(() => {
     document.body.classList.toggle("dark-mode", darkMode);
     localStorage.setItem("darkMode", darkMode);
   }, [darkMode]);
 
-  // 로컬스토리지에서 복원
+  // ✅ localStorage에서 snapshot 복원
   useEffect(() => {
     const uid = user?.uid;
     if (!uid) return;
@@ -30,6 +31,7 @@ export default function useAppLifecycle({
     if (localStorage.getItem("wordData") && !localStorage.getItem(snapshotKey)) {
       localStorage.setItem(snapshotKey, localStorage.getItem("wordData"));
     }
+
     try {
       const saved = JSON.parse(localStorage.getItem(snapshotKey)) || {};
       setWords(saved);
@@ -39,7 +41,7 @@ export default function useAppLifecycle({
     }
   }, [user]);
 
-  // 자동 저장 (debounce + quota 초과 시 중단 상태 외부로 전달)
+  // ✅ 자동 백업 (Firebase + localStorage)
   const debouncedBackup = useRef(
     debounce(async () => {
       const uid = user?.uid;
@@ -82,7 +84,7 @@ export default function useAppLifecycle({
     debouncedBackup();
   }, [user, words]);
 
-  // 탭 복귀 시 자동 복원
+  // ✅ 탭 복귀 시 자동 병합 복원
   useEffect(() => {
     const handleVisibilityChange = async () => {
       if (document.visibilityState === "visible" && user && inputWord.length === 0) {
@@ -91,7 +93,7 @@ export default function useAppLifecycle({
 
         try {
           setIsRestoring(true);
-          await restoreFromFirestoreWithMerge(uid, setWords);
+          await restoreFromFirestoreWithMerge(uid, db, setWords); // ✅ db 인자 전달됨
           skipNextSaveRef.current = true;
           console.log("🔁 복원 완료, 자동 저장 1회 생략");
         } catch (error) {
@@ -101,6 +103,7 @@ export default function useAppLifecycle({
         }
       }
     };
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [user, inputWord]);

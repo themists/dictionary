@@ -1,3 +1,4 @@
+// src/utils/firestoreUtils.js
 import { collection, getDocs } from "firebase/firestore";
 
 /**
@@ -19,7 +20,13 @@ export async function restoreFromFirestoreWithMerge(userId, db, setWords) {
       }
     });
 
-    const localWords = JSON.parse(localStorage.getItem(snapshotKey) || "{}");
+    let localWords = {};
+    try {
+      localWords = JSON.parse(localStorage.getItem(snapshotKey) || "{}");
+    } catch (parseError) {
+      console.warn("⚠️ localStorage JSON 파싱 실패. Firestore 데이터만 사용:", parseError);
+    }
+
     const merged = { ...firestoreWords };
 
     for (const [word, localData] of Object.entries(localWords)) {
@@ -34,17 +41,20 @@ export async function restoreFromFirestoreWithMerge(userId, db, setWords) {
       }
     }
 
-    localStorage.setItem(snapshotKey, JSON.stringify(merged));
+    try {
+      localStorage.setItem(snapshotKey, JSON.stringify(merged));
+    } catch (storageError) {
+      console.warn("⚠️ localStorage 저장 실패. 병합은 성공했지만 로컬 저장 실패:", storageError);
+    }
 
     if (typeof setWords === "function") {
-      setWords(merged); // ✅ 안전하게 호출
+      setWords(merged);
     } else {
       console.error("⚠️ setWords is not a function:", setWords);
-      alert("⚠️ 복원에 실패했습니다. setWords 함수가 전달되지 않았습니다.");
     }
 
   } catch (err) {
     console.error("❌ restoreFromFirestoreWithMerge 실패:", err);
-    alert("⚠️ 병합 복원 중 오류가 발생했습니다.");
+    console.error("⚠️ 병합 복원 중 오류가 발생했습니다.");
   }
 }
