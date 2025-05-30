@@ -58,16 +58,13 @@ export default function useAppLifecycle({
         if (setBackupError) setBackupError(false);
       } catch (err) {
         console.error("❌ 저장 실패:", err);
-
         const message = err?.message || "";
         const code = err?.code || "";
 
         if (message.includes("quota") || code === "resource-exhausted") {
-          console.warn("⚠️ Firestore quota exceeded. 자동 저장 중단");
+          console.warn("⚠️ Firestore quota exceeded.");
           if (setBackupError) setBackupError(true);
-
-          setSaveStatus("⏸️ 저장이 중단되었습니다. Firebase 일일 사용량 초과로 인해 30분 후 자동 재시도됩니다.");
-
+          setSaveStatus("⏸️ Firebase 일일 사용량 초과. 30분 후 재시도됩니다.");
           setTimeout(() => {
             if (setBackupError) setBackupError(false);
             setSaveStatus("");
@@ -103,19 +100,18 @@ export default function useAppLifecycle({
 
         try {
           setIsRestoring(true);
-
-          // ✅ 복원 전/후 상태 비교
           const currentSnapshot = JSON.stringify(words);
-          await restoreFromFirestoreWithMerge(uid, db, setWords);
-          const afterSnapshot = JSON.stringify(words);
+          const mergedWords = await restoreFromFirestoreWithMerge(uid, db, setWords);
 
+          if (!mergedWords) return;
+
+          const afterSnapshot = JSON.stringify(mergedWords);
           if (currentSnapshot === afterSnapshot) {
             skipNextSaveRef.current = true;
             console.log("🔁 복원 후 변경 없음 → 자동 저장 1회 생략");
           } else {
             console.log("🛑 복원 중 사용자 변경 감지 → 자동 저장 생략 안함");
           }
-
         } catch (error) {
           console.error("❌ 복원 실패:", error);
         } finally {

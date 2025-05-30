@@ -6,7 +6,7 @@ export default function useWordActions({ words, setWords, user, db, skipNextSave
     if (!lower) return;
 
     const today = getToday();
-    const now = new Date().toISOString(); // ✅ updatedAt 기준
+    const now = new Date().toISOString();
     const existing = words[lower];
     const updated = { ...words };
 
@@ -14,7 +14,7 @@ export default function useWordActions({ words, setWords, user, db, skipNextSave
       updated[lower] = {
         ...existing,
         lastReviewedAt: today,
-        updatedAt: now // ✅ 재등록 시도 시에도 갱신
+        updatedAt: now
       };
     } else {
       updated[lower] = {
@@ -22,7 +22,7 @@ export default function useWordActions({ words, setWords, user, db, skipNextSave
         lastReviewedAt: today,
         reviewedSources: [],
         createdAt: today,
-        updatedAt: now // ✅ 새 단어 등록
+        updatedAt: now
       };
     }
 
@@ -30,7 +30,6 @@ export default function useWordActions({ words, setWords, user, db, skipNextSave
     setHighlightedWord(lower);
     setPage(1);
     localStorage.setItem("wordData", JSON.stringify(updated));
-    skipNextSaveRef.current = true;
   };
 
   const handleReview = (word, sourceType) => {
@@ -55,7 +54,7 @@ export default function useWordActions({ words, setWords, user, db, skipNextSave
         : data.count + 1,
       lastReviewedAt: today,
       reviewedSources: updatedSources,
-      updatedAt: now // ✅ 복습도 수정 시간 갱신
+      updatedAt: now
     };
 
     const isSignificantUpdate =
@@ -70,7 +69,6 @@ export default function useWordActions({ words, setWords, user, db, skipNextSave
 
     setWords(updated);
     localStorage.setItem("wordData", JSON.stringify(updated));
-    skipNextSaveRef.current = true;
   };
 
   const deleteWord = (word) => {
@@ -78,7 +76,6 @@ export default function useWordActions({ words, setWords, user, db, skipNextSave
     delete updated[word];
     setWords(updated);
     localStorage.setItem("wordData", JSON.stringify(updated));
-    skipNextSaveRef.current = true;
   };
 
   return { addWord, handleReview, deleteWord };
