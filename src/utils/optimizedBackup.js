@@ -18,7 +18,12 @@ export async function optimizedBackup(userId, words, { silent = true } = {}) {
   const newSnapshot = JSON.stringify(words);
   const prevSnapshot = localStorage.getItem(snapshotKey);
 
+  // ✅ 비교 로그 출력
+  console.log("🧪 [Backup] 이전 snapshot:", prevSnapshot?.slice(0, 100));
+  console.log("🧪 [Backup] 현재 snapshot:", newSnapshot.slice(0, 100));
+
   if (prevSnapshot === newSnapshot) {
+    console.log("🛑 [Backup] 변경 사항 없음 → 저장 생략됨");
     if (!silent) alert("✅ 변경된 항목이 없어 저장할 필요가 없습니다.");
     return;
   }
@@ -27,6 +32,8 @@ export async function optimizedBackup(userId, words, { silent = true } = {}) {
   const changedEntries = Object.entries(words).filter(([key, value]) => {
     return JSON.stringify(value) !== JSON.stringify(prevWords[key]);
   });
+
+  console.log(`📦 [Backup] 변경된 항목 수: ${changedEntries.length}`);
 
   const batchSaves = changedEntries.map(([word, data]) =>
     setDoc(doc(db, "users", userId, "words", word), data)
@@ -39,30 +46,5 @@ export async function optimizedBackup(userId, words, { silent = true } = {}) {
   } catch (error) {
     console.error("❌ 백업 실패:", error);
     alert("❌ 백업 중 오류가 발생했습니다.");
-  }
-}
-
-/**
- * ♻️ localStorage에서 백업 데이터 불러와 복원
- */
-export function optimizedRestore(userId) {
-  if (!userId) return null;
-
-  const snapshotKey = getSnapshotKey(userId);
-  const snapshot = localStorage.getItem(snapshotKey);
-
-  if (!snapshot) {
-    alert("📭 저장된 백업 데이터를 찾을 수 없습니다.");
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(snapshot);
-    alert(`📦 백업 데이터 불러오기 완료 (${Object.keys(parsed).length}개 항목)`);
-    return parsed;
-  } catch (error) {
-    console.error("❌ 복원 실패:", error);
-    alert("❌ 백업 데이터를 읽을 수 없습니다.");
-    return null;
   }
 }

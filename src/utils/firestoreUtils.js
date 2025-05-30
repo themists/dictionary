@@ -15,7 +15,7 @@ export async function restoreFromFirestoreWithMerge(userId, db, setWords) {
     const firestoreWords = {};
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      if (data && data.lastReviewedAt) {
+      if (data) {
         firestoreWords[doc.id] = data;
       }
     });
@@ -27,17 +27,15 @@ export async function restoreFromFirestoreWithMerge(userId, db, setWords) {
       console.warn("⚠️ localStorage JSON 파싱 실패. Firestore 데이터만 사용:", parseError);
     }
 
-    const merged = { ...firestoreWords };
+    const merged = { ...localWords }; // 🔁 local 우선 병합 시작
 
-    for (const [word, localData] of Object.entries(localWords)) {
-      const remoteData = firestoreWords[word];
-      if (!localData || typeof localData !== "object") continue;
+    for (const [word, remoteData] of Object.entries(firestoreWords)) {
+      const localData = localWords[word];
+      const localTime = new Date(localData?.updatedAt || "2000-01-01");
+      const remoteTime = new Date(remoteData?.updatedAt || "2000-01-01");
 
-      const localDate = new Date(localData.lastReviewedAt || "2000-01-01");
-      const remoteDate = new Date(remoteData?.lastReviewedAt || "2000-01-01");
-
-      if (!remoteData || localDate > remoteDate) {
-        merged[word] = localData;
+      if (!localData || remoteTime > localTime) {
+        merged[word] = remoteData;
       }
     }
 

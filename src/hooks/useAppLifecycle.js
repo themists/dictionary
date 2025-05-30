@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { optimizedBackup } from "../utils/optimizedBackup";
 import { restoreFromFirestoreWithMerge } from "../utils/firestoreUtils";
 import { debounce } from "../utils/debounce";
-import { db } from "../utils/firebase"; // ✅ db 인자 전달용
+import { db } from "../utils/firebase";
 
 export default function useAppLifecycle({
   user,
@@ -16,15 +16,13 @@ export default function useAppLifecycle({
   skipNextSaveRef,
   setBackupError
 }) {
-  const lastWordUpdateRef = useRef(Date.now()); // ✅ 최근 단어 변경 시간 기록
+  const lastWordUpdateRef = useRef(Date.now());
 
-  // ✅ 다크모드 반영
   useEffect(() => {
     document.body.classList.toggle("dark-mode", darkMode);
     localStorage.setItem("darkMode", darkMode);
   }, [darkMode]);
 
-  // ✅ 로컬에서 초기 복원
   useEffect(() => {
     const uid = user?.uid;
     if (!uid) return;
@@ -43,14 +41,12 @@ export default function useAppLifecycle({
     }
   }, [user]);
 
-  // ✅ 단어 변경 시 타임스탬프 갱신
   useEffect(() => {
     if (user && words) {
       lastWordUpdateRef.current = Date.now();
     }
   }, [user, words]);
 
-  // ✅ 자동 백업
   const debouncedBackup = useRef(
     debounce(async () => {
       const uid = user?.uid;
@@ -93,12 +89,11 @@ export default function useAppLifecycle({
     debouncedBackup();
   }, [user, words]);
 
-  // ✅ 탭 복귀 시 자동 병합 복원 (단, 최근 단어 변경 시 복원 생략)
   useEffect(() => {
     const handleVisibilityChange = async () => {
       if (document.visibilityState === "visible" && user && inputWord.length === 0) {
         const timeSinceLastChange = Date.now() - lastWordUpdateRef.current;
-        if (timeSinceLastChange < 3000) {
+        if (timeSinceLastChange < 6000) {
           console.log("🛑 최근 단어 변경으로 인해 복원 생략");
           return;
         }
@@ -108,9 +103,19 @@ export default function useAppLifecycle({
 
         try {
           setIsRestoring(true);
+
+          // ✅ 복원 전/후 상태 비교
+          const currentSnapshot = JSON.stringify(words);
           await restoreFromFirestoreWithMerge(uid, db, setWords);
-          skipNextSaveRef.current = true;
-          console.log("🔁 복원 완료, 자동 저장 1회 생략");
+          const afterSnapshot = JSON.stringify(words);
+
+          if (currentSnapshot === afterSnapshot) {
+            skipNextSaveRef.current = true;
+            console.log("🔁 복원 후 변경 없음 → 자동 저장 1회 생략");
+          } else {
+            console.log("🛑 복원 중 사용자 변경 감지 → 자동 저장 생략 안함");
+          }
+
         } catch (error) {
           console.error("❌ 복원 실패:", error);
         } finally {

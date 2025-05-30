@@ -6,17 +6,23 @@ export default function useWordActions({ words, setWords, user, db, skipNextSave
     if (!lower) return;
 
     const today = getToday();
+    const now = new Date().toISOString(); // ✅ updatedAt 기준
     const existing = words[lower];
     const updated = { ...words };
 
     if (existing) {
-      updated[lower] = { ...existing, lastReviewedAt: today };
+      updated[lower] = {
+        ...existing,
+        lastReviewedAt: today,
+        updatedAt: now // ✅ 재등록 시도 시에도 갱신
+      };
     } else {
       updated[lower] = {
         count: 0,
         lastReviewedAt: today,
         reviewedSources: [],
-        createdAt: today
+        createdAt: today,
+        updatedAt: now // ✅ 새 단어 등록
       };
     }
 
@@ -24,11 +30,12 @@ export default function useWordActions({ words, setWords, user, db, skipNextSave
     setHighlightedWord(lower);
     setPage(1);
     localStorage.setItem("wordData", JSON.stringify(updated));
-    skipNextSaveRef.current = true; // ✅ 단어 추가 시 자동 저장 1회 생략
+    skipNextSaveRef.current = true;
   };
 
   const handleReview = (word, sourceType) => {
     const today = getToday();
+    const now = new Date().toISOString();
     const data = words[word];
     if (!data) return;
 
@@ -47,16 +54,14 @@ export default function useWordActions({ words, setWords, user, db, skipNextSave
         ? data.count
         : data.count + 1,
       lastReviewedAt: today,
-      reviewedSources: updatedSources
+      reviewedSources: updatedSources,
+      updatedAt: now // ✅ 복습도 수정 시간 갱신
     };
 
-    // ✅ 저장 의미가 있는 변경인지 판단
     const isSignificantUpdate =
       updatedWord.count !== data.count || updatedWord.lastReviewedAt !== data.lastReviewedAt;
 
-    if (!isSignificantUpdate) {
-      return; // ✅ 성과 변화 없으면 저장 생략
-    }
+    if (!isSignificantUpdate) return;
 
     const updated = {
       ...words,
@@ -65,7 +70,7 @@ export default function useWordActions({ words, setWords, user, db, skipNextSave
 
     setWords(updated);
     localStorage.setItem("wordData", JSON.stringify(updated));
-    skipNextSaveRef.current = true; // ✅ 복습 후 자동 저장 1회 생략
+    skipNextSaveRef.current = true;
   };
 
   const deleteWord = (word) => {
@@ -73,7 +78,7 @@ export default function useWordActions({ words, setWords, user, db, skipNextSave
     delete updated[word];
     setWords(updated);
     localStorage.setItem("wordData", JSON.stringify(updated));
-    skipNextSaveRef.current = true; // ✅ 삭제 후 자동 저장 1회 생략
+    skipNextSaveRef.current = true;
   };
 
   return { addWord, handleReview, deleteWord };
