@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { optimizedBackup } from "../utils/optimizedBackup";
 import { restoreFromFirestoreWithMerge } from "../utils/firestoreUtils";
 import { debounce } from "../utils/debounce";
-import { db } from "../utils/firebase"; // ✅ 1단계: db 인자 추가
+import { db } from "../utils/firebase"; // ✅ db 인자 전달용
 
 export default function useAppLifecycle({
   user,
@@ -16,13 +16,15 @@ export default function useAppLifecycle({
   skipNextSaveRef,
   setBackupError
 }) {
-  // ✅ 다크모드 설정
+  const lastWordUpdateRef = useRef(Date.now()); // ✅ 최근 단어 변경 시간 기록
+
+  // ✅ 다크모드 반영
   useEffect(() => {
     document.body.classList.toggle("dark-mode", darkMode);
     localStorage.setItem("darkMode", darkMode);
   }, [darkMode]);
 
-  // ✅ localStorage에서 snapshot 복원
+  // ✅ 로컬에서 초기 복원
   useEffect(() => {
     const uid = user?.uid;
     if (!uid) return;
@@ -41,7 +43,14 @@ export default function useAppLifecycle({
     }
   }, [user]);
 
-  // ✅ 자동 백업 (Firebase + localStorage)
+  // ✅ 단어 변경 시 타임스탬프 갱신
+  useEffect(() => {
+    if (user && words) {
+      lastWordUpdateRef.current = Date.now();
+    }
+  }, [user, words]);
+
+  // ✅ 자동 백업
   const debouncedBackup = useRef(
     debounce(async () => {
       const uid = user?.uid;
@@ -66,7 +75,7 @@ export default function useAppLifecycle({
           setTimeout(() => {
             if (setBackupError) setBackupError(false);
             setSaveStatus("");
-          }, 30 * 60 * 1000); // 30분 후 자동 복구
+          }, 30 * 60 * 1000);
         } else {
           setSaveStatus("⚠️ 저장 실패");
         }
@@ -84,16 +93,22 @@ export default function useAppLifecycle({
     debouncedBackup();
   }, [user, words]);
 
-  // ✅ 탭 복귀 시 자동 병합 복원
+  // ✅ 탭 복귀 시 자동 병합 복원 (단, 최근 단어 변경 시 복원 생략)
   useEffect(() => {
     const handleVisibilityChange = async () => {
       if (document.visibilityState === "visible" && user && inputWord.length === 0) {
+        const timeSinceLastChange = Date.now() - lastWordUpdateRef.current;
+        if (timeSinceLastChange < 3000) {
+          console.log("🛑 최근 단어 변경으로 인해 복원 생략");
+          return;
+        }
+
         const uid = user?.uid;
         if (!uid) return;
 
         try {
           setIsRestoring(true);
-          await restoreFromFirestoreWithMerge(uid, db, setWords); // ✅ db 인자 전달됨
+          await restoreFromFirestoreWithMerge(uid, db, setWords);
           skipNextSaveRef.current = true;
           console.log("🔁 복원 완료, 자동 저장 1회 생략");
         } catch (error) {
